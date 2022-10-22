@@ -20,7 +20,7 @@ def saturate_image(img,amt):
     h,s,v = cv.split(img)
     s=s.astype('float32')
     s=s*amt
-    s = np.clip(v,0,255)
+    s = np.clip(s,0,255)
     s=s.astype('uint8')
     img = cv.merge([h,s,v])
     processedImage = cv.cvtColor(img, cv.COLOR_HSV2BGR)
