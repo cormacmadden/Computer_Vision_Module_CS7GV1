@@ -77,23 +77,9 @@ def kernel_transform(img, amt):
             roi = img[i-pad:i+pad+1,j-pad:j+pad+1]
             #base image section 
             k1 = (roi * arr)
-
             k2 = np.sum(k1, axis = 0)
             k3 = np.sum(k2, axis = 0)
-            
-            
-                #for ki in range(0,amt-1):
-                #   for kj in range(0,amt-1):
-                    #print(img[math.floor(i-(amt/2)-1)][math.floor(j-(amt/2)-1)])
-                    #imageKi = math.floor(i-(amt/2)-1)+ki
-                    #imageKj = math.floor(j-(amt/2)-1)+kj
-                    #print(img[imageKi][imageKj])
-                    #print(arr[ki][kj])
-                    #average += img[imageKi][imageKj]*arr[ki][kj]
-            #print(average)
-            #print(i, + j)
             output[i][j]=k3
-        
     return output
 
 def create_kernel(dimemsion):
