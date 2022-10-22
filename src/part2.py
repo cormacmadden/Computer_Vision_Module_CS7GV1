@@ -15,18 +15,20 @@ def run():
     images[0] = scale_image(images[0],0.15)
     images[1] = scale_image(images[1],0.3)
     images[2] = scale_image(images[2],0.1)
+    images[3] = scale_image(images[3],0.25)
+
+    noisyImage = images[1]
+    #noisyImage = scale_image(noisyImage,0.5)
+    kernalSize = 3
+    #cv.imshow("Before/After", images[3])
+    #for img in images:
+    cv.imshow("Before", noisyImage)
+    blurred = kernel_transform(images[1],kernalSize)
+    #Hori = np.concatenate((images[3], blurred), axis=1)
     
-    noisyImage = images[0]
-    noisyImage = scale_image(noisyImage,0.2)
-    ksize = (10, 10)
-    
-    for img in images:
-        img = cv.resize(img, (540, 960))
-        blurred = kernel_transform(img,ksize)
-        Hori = np.concatenate((Hori, blurred), axis=1)
-        cv.imshow("Before/After", Hori)
+    cv.imshow("After", blurred)
         
-    blurry_image = cv.blur(noisyImage, ksize)
+    #blurry_image = cv.blur(noisyImage, ksize)
 
     cv.waitKey(0)
     cv.destroyAllWindows()

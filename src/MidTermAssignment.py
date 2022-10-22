@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 import cv2 as cv
 import numpy as np
 import pandas as pd
+import math
 
 def brighten_image(img,amt):
     img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
@@ -61,9 +62,40 @@ def scale_image(img, percentage: float):
     dim = (width, height)
     return cv.resize(img,dim,cv.INTER_AREA)
 
-def kernel_transform(img, kernelArray):
-    k = (kernelArray.shape[0]/2)-1
-    for i in range(img.shape[1],k):
-        for j in range(img.shape[0],k):
-            img
-    return img
+def kernel_transform(img, amt):
+    arr = np.zeros((amt,amt,3))
+    arr += 0.1
+    output = img * 0
+    pad = (amt - 1) // 2
+    output = cv.copyMakeBorder(img, pad, pad, pad, pad,
+		                cv.BORDER_REPLICATE)
+	#output = np.zeros((iH, iW), dtype="float32")
+    
+    for i in range(pad, img.shape[0]-pad,1):
+        for j in range(pad, img.shape[1]-pad,1):
+            #duplicate of base image, size of kernel
+            roi = img[i-pad:i+pad+1,j-pad:j+pad+1]
+            #base image section 
+            k1 = (roi * arr)
+
+            k2 = np.sum(k1, axis = 0)
+            k3 = np.sum(k2, axis = 0)
+            
+            
+                #for ki in range(0,amt-1):
+                #   for kj in range(0,amt-1):
+                    #print(img[math.floor(i-(amt/2)-1)][math.floor(j-(amt/2)-1)])
+                    #imageKi = math.floor(i-(amt/2)-1)+ki
+                    #imageKj = math.floor(j-(amt/2)-1)+kj
+                    #print(img[imageKi][imageKj])
+                    #print(arr[ki][kj])
+                    #average += img[imageKi][imageKj]*arr[ki][kj]
+            #print(average)
+            #print(i, + j)
+            output[i][j]=k3
+        
+    return output
+
+def create_kernel(dimemsion):
+    arr = [0.1] * dimemsion
+    return arr

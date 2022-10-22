@@ -17,7 +17,6 @@ def run():
     images[2] = scale_image(images[2],0.1)
 
     for img in images:
-        #img = cv.resize(img, (540, 960))
         brightened = brighten_image(img,50)
         saturated = saturate_image(img,2)
         contrasted = contrast_image(img,1.5,50)
