@@ -1,3 +1,4 @@
+from unittest import result
 from sklearn.datasets import load_sample_images
 from matplotlib import pyplot as plt
 import cv2 as cv
@@ -27,16 +28,23 @@ def saturate_image(img,amt):
     processedImage = cv.cvtColor(img, cv.COLOR_HSV2BGR)
     return processedImage
 
+def sat_image(img,amt):
+    
+    #h,s,v = cv.split(img)
+    processedImage=img[:,:].astype('float32')
+    processedImage = processedImage[:,:]+amt
+    #s=s*amt
+    processedImage = np.clip(processedImage,0,255)
+    processedImage=processedImage.astype('uint8')
+    #img = cv.merge([h,s,v])
+    #processedImage = cv.cvtColor(img, cv.COLOR_HSV2BGR)
+    return processedImage
+
 def contrast_image(img,contrast, brightness):
     new_image = np.zeros(img.shape, img.dtype)
     #alpha = amt # Simple contrast control
     beta = 0    # Simple brightness control
     brightness += int(round(255*(1-contrast)/2))
-    #adjusted = cv.convertScaleAbs(img, alpha=amt, beta=beta)
-    #for y in range(img.shape[0]):
-    #    for x in range(img.shape[1]):
-    #        for c in range(img.shape[2]):
-    #            new_image[y,x,c] = np.clip(alpha*img[y,x,c] + beta, 0, 255)
     brightness += int(round(255*(1-contrast)/2))
     return cv.addWeighted(img, contrast, img, 0, brightness)
 
@@ -62,6 +70,54 @@ def scale_image(img, percentage: float):
     dim = (width, height)
     return cv.resize(img,dim,cv.INTER_AREA)
 
+def image_temp(img, amt):
+    
+    b = img[:,:,0]
+    g = img[:,:,1]
+    r = img[:,:,2]
+    b=b.astype('float32')
+    r=r.astype('float32')
+    
+    b = b[:,:] - amt
+    r = r[:,:] + amt
+    
+    b = np.clip(b,0,255)
+    r = np.clip(r,0,255)
+    
+    b=b.astype('uint8')
+    r=r.astype('uint8')
+
+    output = np.zeros((img.shape[0],img.shape[1],3))
+    output=output.astype('uint8')
+
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j] = [b[i,j], g[i,j], r[i,j]]
+    
+    return output
+
+def image_tint(img, amt):
+    
+    b = img[:,:,0]
+    g = img[:,:,1]
+    r = img[:,:,2]
+    g=g.astype('float32')
+    
+    g = g[:,:] + amt
+    
+    g = np.clip(g,0,255)
+    
+    g=g.astype('uint8')
+
+    output = np.zeros((img.shape[0],img.shape[1],3))
+    output=output.astype('uint8')
+
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j] = [b[i,j], g[i,j], r[i,j]]
+    
+    return output
+
 def kernel_transform(img, amt):
     arr = np.zeros((amt,amt,3))
     arr += 0.1
@@ -85,3 +141,40 @@ def kernel_transform(img, amt):
 def create_kernel(dimemsion):
     arr = [0.1] * dimemsion
     return arr
+
+# Python3 program change RGB Color
+# Model to HSV Color Model
+ 
+def rgb_to_hsv(r, g, b):
+    
+    r, g, b = r / 255.0, g / 255.0, b / 255.0
+    cmax = max(r, g, b)    # maximum of r, g, b
+    cmin = min(r, g, b)    # minimum of r, g, b
+    diff = cmax-cmin       # diff of cmax and cmin.
+ 
+    # if cmax and cmax are equal then h = 0
+    if cmax == cmin:
+        h = 0
+     
+    # if cmax equal r then compute h
+    elif cmax == r:
+        h = (60 * ((g - b) / diff) + 360) % 360
+ 
+    # if cmax equal g then compute h
+    elif cmax == g:
+        h = (60 * ((b - r) / diff) + 120) % 360
+ 
+    # if cmax equal b then compute h
+    elif cmax == b:
+        h = (60 * ((r - g) / diff) + 240) % 360
+ 
+    # if cmax equal zero
+    if cmax == 0:
+        s = 0
+    else:
+        s = (diff / cmax) * 100
+ 
+    # compute v
+    v = cmax * 100
+    return h, s, v
+ 

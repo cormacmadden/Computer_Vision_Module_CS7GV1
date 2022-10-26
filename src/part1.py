@@ -15,16 +15,21 @@ def run():
     images[0] = scale_image(images[0],0.15)
     images[1] = scale_image(images[1],0.3)
     images[2] = scale_image(images[2],0.1)
-
+    
     for img in images:
         brightened = brighten_image(img,50)
-        saturated = saturate_image(img,2)
+        warmed = image_temp(img, 50)
+        cooled = image_temp(img, -50)
+        tinted = image_tint(img, -50)
+        saturated = sat_image(img,2)
+        cv.imshow("cooled", cooled) 
         contrasted = contrast_image(img,1.5,50)
+        cv.imshow("contrasted", contrasted) 
         solarized = solarization(img)
         Hori = np.concatenate((img, brightened), axis=1)
-        Hori = np.concatenate((Hori, saturated), axis=1)
-        Hori = np.concatenate((Hori, contrasted), axis=1)
-        Hori = np.concatenate((Hori, solarized), axis=1)
+        Hori = np.concatenate((Hori, cooled), axis=1)
+        Hori = np.concatenate((Hori, warmed), axis=1)
+        Hori = np.concatenate((Hori, tinted), axis=1)
         cv.imshow("Before/After", Hori)     
     
     cv.waitKey(0)
