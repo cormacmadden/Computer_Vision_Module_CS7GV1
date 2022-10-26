@@ -100,6 +100,18 @@ def greyscale(img):
     
     output = output*255        
     output = np.clip(output,0,255)
+    output = output.astype('uint8')
+    return output
+
+def greyscale_to_rgb(img):
+    output = np.zeros((img.shape[0],img.shape[1],3))
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j,0] = img[i,j]
+            output[i,j,1] = img[i,j]
+            output[i,j,2] = img[i,j]
+            
+    output = np.clip(output,0,255)
     output=output.astype('uint8')
     return output
 
@@ -134,6 +146,16 @@ def contrast_image(img,contrast, brightness):
     return output
     #return cv.addWeighted(img, contrast, img, 0, brightness)
 
+def threshold(img, amt):
+    greyed = greyscale(img)
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            if(greyed[i,j]<amt):greyed[i,j] = 0
+            else: greyed[i,j] = 1
+    
+    greyed = greyed*255
+    return greyscale_to_rgb(greyed)
+    
 def split(img):
     b = img[:,:,0]
     g = img[:,:,1]
