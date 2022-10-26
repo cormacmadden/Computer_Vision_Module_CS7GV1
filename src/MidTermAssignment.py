@@ -1,3 +1,4 @@
+from macpath import split
 from unittest import result
 from sklearn.datasets import load_sample_images
 from matplotlib import pyplot as plt
@@ -17,6 +18,34 @@ def brighten_image(img,amt):
     processedImage = cv.cvtColor(img, cv.COLOR_HSV2BGR)
     return processedImage
 
+def brighten(img, amt):
+    output = img
+    r,g,b = split(img)
+    
+    b1 = (b[:,:]/255) * amt
+    g1 = (g[:,:]/255) * amt
+    r1 = (r[:,:]/255) * amt
+    
+    b = b[:,:] + b1
+    r = r[:,:] + r1
+    g = g[:,:] + g1
+
+    b = np.clip(b,0,255)
+    r = np.clip(r,0,255)
+    g = np.clip(g,0,255)
+    
+    b=b.astype('uint8')
+    g=g.astype('uint8')
+    r=r.astype('uint8')   
+     
+    output=output.astype('uint8')
+
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j] = [b[i,j], g[i,j], r[i,j]]
+        
+    return output
+
 def saturate_image(img,amt):
     img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     h,s,v = cv.split(img)
@@ -29,7 +58,6 @@ def saturate_image(img,amt):
     return processedImage
 
 def sat_image(img,amt):
-    
     #h,s,v = cv.split(img)
     processedImage=img[:,:].astype('float32')
     processedImage = processedImage[:,:]+amt
@@ -40,29 +68,85 @@ def sat_image(img,amt):
     #processedImage = cv.cvtColor(img, cv.COLOR_HSV2BGR)
     return processedImage
 
+def greyscale(img):
+    r,g,b = split(img)
+    b=b.astype('float32')
+    g=g.astype('float32')
+    r=r.astype('float32')
+    
+    if(r < 0.04045): r = r/12.92
+    if(b < 0.04045): b = b/12.92
+    if(g < 0.04045): g = g/12.92
+    r = ((r+0.055)/1.055)**2.4
+    g = ((g+0.055)/1.055)**2.4
+    b = ((b+0.055)/1.055)**2.4
+    
+    b = b/255
+    g = g/255
+    r = r/255
+    
+    Y = 0.2126*r + 0.7152*g + 0.0722*b
+    output = np.zeros((img.shape[0],img.shape[1],1))
+    ytest = 1.055*(Y[0,0]**(1/2.4))-0.055
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            if Y[i,j] <= 0.0031308:
+                output[i,j] = 12.92*Y[i,j]
+            else:
+                output[i,j] = (1.055*(Y[i,j]**(1/2.4)))-0.055
+    return output
+
+    
+
 def contrast_image(img,contrast, brightness):
-    new_image = np.zeros(img.shape, img.dtype)
-    #alpha = amt # Simple contrast control
-    beta = 0    # Simple brightness control
-    brightness += int(round(255*(1-contrast)/2))
-    brightness += int(round(255*(1-contrast)/2))
-    return cv.addWeighted(img, contrast, img, 0, brightness)
+    #new_image = np.zeros(img.shape, img.dtype)
+    output = img
+    r,g,b = split(output)
+    b=b.astype('float32')
+    g=g.astype('float32')
+    r=r.astype('float32')
+    
+    r = (r-128) * contrast + 128
+    g = (g-128) * contrast + 128
+    b = (b-128) * contrast + 128
+    
+    b = np.clip(b,0,255)
+    r = np.clip(r,0,255)
+    g = np.clip(g,0,255)
+
+    b=b.astype('uint8')
+    g=g.astype('uint8')
+    r=r.astype('uint8')
+     
+    output=output.astype('uint8')
+
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j] = [b[i,j], g[i,j], r[i,j]]
+    
+    output = np.clip(output,0,255)
+    output=output.astype('uint8')
+    return output
+    #return cv.addWeighted(img, contrast, img, 0, brightness)
+
+def split(img):
+    b = img[:,:,0]
+    g = img[:,:,1]
+    r = img[:,:,2]
+    rgb = r,g,b
+    return rgb
 
 def solarization(img, amt = 1):
-    img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    h,s,v = cv.split(img)
-    v=v.astype('float32')
-    v= v*amt
-    v = np.clip(v,0,255)
-    for i in range(len(v)):
-        for j in range(len(v[i])):
-            if(v[i][j] >= 255.0):
-                v[i][j] = 0
-    
-    v=v.astype('uint8')
-    img = cv.merge([h,s,v])
-    processedImage = cv.cvtColor(img, cv.COLOR_HSV2BGR)
-    return processedImage
+    output = brighten(img, 100)
+    r,g,b = split(output)
+
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            if ((r[i,j] == 255) and (g[i,j] == 255) and (b[i,j] == 255 )):
+                output[i][j] = [0,0,0]
+                
+    output = output.astype('uint8')
+    return output
 
 def scale_image(img, percentage: float):
     width = int(img.shape[1] * percentage)
@@ -142,9 +226,6 @@ def create_kernel(dimemsion):
     arr = [0.1] * dimemsion
     return arr
 
-# Python3 program change RGB Color
-# Model to HSV Color Model
- 
 def rgb_to_hsv(r, g, b):
     
     r, g, b = r / 255.0, g / 255.0, b / 255.0
