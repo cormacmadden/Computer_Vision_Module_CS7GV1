@@ -73,17 +73,20 @@ def greyscale(img):
     b=b.astype('float32')
     g=g.astype('float32')
     r=r.astype('float32')
-    
-    if(r < 0.04045): r = r/12.92
-    if(b < 0.04045): b = b/12.92
-    if(g < 0.04045): g = g/12.92
-    r = ((r+0.055)/1.055)**2.4
-    g = ((g+0.055)/1.055)**2.4
-    b = ((b+0.055)/1.055)**2.4
-    
+
     b = b/255
     g = g/255
     r = r/255
+    
+    for i in range(r.shape[0]):
+        for j in range(r.shape[1]):
+            if(r[i,j] < 0.04045): r[i,j] = r[i,j]/12.92
+            if(b[i,j] < 0.04045): b[i,j] = b[i,j]/12.92
+            if(g[i,j] < 0.04045): g[i,j] = g[i,j]/12.92
+            
+    r = ((r+0.055)/1.055)**2.4
+    g = ((g+0.055)/1.055)**2.4
+    b = ((b+0.055)/1.055)**2.4
     
     Y = 0.2126*r + 0.7152*g + 0.0722*b
     output = np.zeros((img.shape[0],img.shape[1],1))
@@ -94,9 +97,11 @@ def greyscale(img):
                 output[i,j] = 12.92*Y[i,j]
             else:
                 output[i,j] = (1.055*(Y[i,j]**(1/2.4)))-0.055
-    return output
-
     
+    output = output*255        
+    output = np.clip(output,0,255)
+    output=output.astype('uint8')
+    return output
 
 def contrast_image(img,contrast, brightness):
     #new_image = np.zeros(img.shape, img.dtype)
@@ -258,4 +263,3 @@ def rgb_to_hsv(r, g, b):
     # compute v
     v = cmax * 100
     return h, s, v
- 
