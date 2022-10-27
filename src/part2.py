@@ -17,16 +17,14 @@ def run():
     images[2] = scale_image(images[2],0.1)
     images[3] = scale_image(images[3],0.25)
 
-    noisyImage = images[1]
-    #noisyImage = scale_image(noisyImage,0.5)
-    kernalSize = 3
-    #cv.imshow("Before/After", images[3])
-    #for img in images:
+    noisyImage = images[3]
+    kernalSize = 5
     cv.imshow("Before", noisyImage)
-    blurred = kernel_transform(images[1],kernalSize)
-    #Hori = np.concatenate((images[3], blurred), axis=1)
-    
-    cv.imshow("After", blurred)
+    #blurred = box_blur(images[3],kernalSize)    
+    #cv.imshow("After", blurred)
+
+    Gblurred = median_filter(images[3],kernalSize)    
+    cv.imshow("After", Gblurred)
         
     #blurry_image = cv.blur(noisyImage, ksize)
 
