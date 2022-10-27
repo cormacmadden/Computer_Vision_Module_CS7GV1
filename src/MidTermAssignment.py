@@ -78,6 +78,7 @@ def greyscale(img):
     g = g/255
     r = r/255
     
+    #Gamma transformation 
     for i in range(r.shape[0]):
         for j in range(r.shape[1]):
             if(r[i,j] < 0.04045): r[i,j] = r[i,j]/12.92
@@ -144,7 +145,6 @@ def contrast_image(img,contrast, brightness):
     output = np.clip(output,0,255)
     output=output.astype('uint8')
     return output
-    #return cv.addWeighted(img, contrast, img, 0, brightness)
 
 def threshold(img, amt):
     greyed = greyscale(img)
@@ -229,29 +229,35 @@ def image_tint(img, amt):
     
     return output
 
-def kernel_transform(img, amt):
+def box_blur(img, amt):
     arr = np.zeros((amt,amt,3))
-    arr += 0.1
+    arr = 1
+    arr = arr/(amt**2)
     output = img * 0
     pad = (amt - 1) // 2
-    output = cv.copyMakeBorder(img, pad, pad, pad, pad,
-		                cv.BORDER_REPLICATE)
 	#output = np.zeros((iH, iW), dtype="float32")
     
-    for i in range(pad, img.shape[0]-pad,1):
-        for j in range(pad, img.shape[1]-pad,1):
+    for i in range(0, img.shape[0],1):
+        for j in range(0, img.shape[1],1):
             #duplicate of base image, size of kernel
-            roi = img[i-pad:i+pad+1,j-pad:j+pad+1]
-            #base image section 
+            test = i-pad
+            test2 = i+pad
+            test3 = j-pad
+            test4 = j+pad
+            
+            test = np.clip(test,0,img.shape[0])
+            test2 = np.clip(test2,0,img.shape[0])
+            test3 = np.clip(test3,0,img.shape[1])
+            test4 = np.clip(test4,0,img.shape[1])
+                       
+            roi = np.zeros((amt,amt,3))
+            roi = img[(test):(test2),(test3):(test4)]
+            
             k1 = (roi * arr)
             k2 = np.sum(k1, axis = 0)
             k3 = np.sum(k2, axis = 0)
             output[i][j]=k3
     return output
-
-def create_kernel(dimemsion):
-    arr = [0.1] * dimemsion
-    return arr
 
 def rgb_to_hsv(r, g, b):
     
@@ -285,3 +291,124 @@ def rgb_to_hsv(r, g, b):
     # compute v
     v = cmax * 100
     return h, s, v
+
+def convolution(image, kernel):
+ 
+    image_width = image.shape[0]
+    image_height = image.shape[1]
+    kernel_width = kernel.shape[0]
+    kernel_height = kernel.shape[1]
+ 
+    output = np.zeros(image.shape)
+ 
+    padx = (kernel.shape[0] - 1) // 2
+    pady = (kernel.shape[1] - 1) // 2
+ 
+    #blank image that's padded on x and y
+    padded_image = np.zeros((image_width + (2 * pady), image_height + (2 * padx),3))
+    #filled image that's padded on x and y
+    padded_image[padx:padded_image.shape[0] - padx, pady:padded_image.shape[1] - pady] = image
+    
+    for i in range(padx):
+        #left padding
+        padded_image[i,pady:padded_image.shape[1]-pady] = image[0,:]
+        
+        #right padding
+        padded_image[(i+image_width+padx),pady:padded_image.shape[1]-pady] = image[image_width-4,:]
+        
+    for j in range(pady):
+        #top padding
+        padded_image[padx:padded_image.shape[0]-padx,j] = image[:,0]
+        #bottom padding
+        padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
+
+    for i in range(image_width):
+        for j in range(image_height):
+            roi = padded_image[i:i + kernel_width, j:j + kernel_height]
+            k1 = (kernel * roi)
+            k2 = np.sum(k1, axis = 0)
+            k3 = np.sum(k2, axis = 0)
+            k3 = np.clip(k3,0,255)
+            output[i][j]=k3
+     
+
+    output=output.astype('uint8')
+    return output
+
+def gaussian_blur(image, kernel_size):
+    kernel = gaussian_kernel(kernel_size, sigma=math.sqrt(kernel_size))
+    return convolution(image, kernel)
+
+def gaussian_kernel(size, sigma=1):
+    kernel_1D = np.linspace(-(size // 2), size // 2, size)
+    for i in range(size):
+        kernel_1D[i] = dnorm(kernel_1D[i], 0, sigma)
+    one = np.sum(kernel_1D)
+
+    kernel_2D = np.outer(kernel_1D.T, kernel_1D.T)
+    sum = np.sum(kernel_2D)
+
+            
+    for i in range(kernel_2D.shape[0]):
+        for j in range(kernel_2D.shape[1]): 
+            kernel_2D[i,j] /= sum
+            
+    #kernel_2D *= 1.0 / kernel_2D.max()
+    
+    kernel_3D = np.zeros((size,size,3))
+    kernel_3D[:,:,0] = kernel_2D[:,:]
+    kernel_3D[:,:,1] = kernel_2D[:,:]
+    kernel_3D[:,:,2] = kernel_2D[:,:]
+ 
+    return kernel_3D
+
+def dnorm(x, mu, sd):
+    return 1 / (np.sqrt(2 * np.pi) * sd) * np.e ** (-np.power((x - mu) / sd, 2) / 2)
+
+def hsv_to_rgb (color):
+        h,s,v,r,g,b
+        h= color[0]
+        s= color[1]
+        v= color[2]
+        if(s == 0 ):
+            # achromatic (grey)
+            r = g = b = v
+            return [r,g,b]
+        
+        i = h // 60;            # sector 0 to 5
+        f = h - i;          # factorial part of h
+        p = v * ( 1 - s )
+        q = v * ( 1 - s * f )
+        t = v * ( 1 - s * ( 1 - f ) )
+        if i == 0:
+                r = v
+                g = t
+                b = p
+                
+        elif i == 1:
+                r = q
+                g = v
+                b = p
+                
+        elif i == 2:
+                r = p
+                g = v
+                b = t
+                
+        elif i == 3:
+                r = p
+                g = q
+                b = v
+                
+        elif i == 3:
+                r = t
+                g = p
+                b = v
+                
+        else:  
+                r = v
+                g = p
+                b = q
+                
+        
+        return r,g,b
