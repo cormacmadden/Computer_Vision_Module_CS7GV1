@@ -21,7 +21,7 @@ def run():
     noisyImage = images[3]
     kernalSize = 9
     
-    Gblurred = gaussian_blur(noisyImage,kernalSize)
+    Gblurred = sobel_filter(noisyImage,1)
     Gblurred = scale_image(Gblurred,3.0)
     noisyImage = scale_image(noisyImage,3.0)
     

@@ -259,222 +259,96 @@ def box_blur(img, amt):
             output[i][j]=k3
     return output
 
-def rgb_to_hsv(r, g, b):
+def gaussian_blur(image, kernel_size):
+    kernel = gaussian_kernel(kernel_size, sigma=math.sqrt(kernel_size))
+    return convolution3D(image, kernel)
+
+def sobel_filter(image,amt):
+    image = greyscale(image)
     
-    r, g, b = r / 255.0, g / 255.0, b / 255.0
-    cmax = max(r, g, b)    # maximum of r, g, b
-    cmin = min(r, g, b)    # minimum of r, g, b
-    diff = cmax-cmin       # diff of cmax and cmin.
- 
-    # if cmax and cmax are equal then h = 0
-    if cmax == cmin:
-        h = 0
-     
-    # if cmax equal r then compute h
-    elif cmax == r:
-        h = (60 * ((g - b) / diff) + 360) % 360
- 
-    # if cmax equal g then compute h
-    elif cmax == g:
-        h = (60 * ((b - r) / diff) + 120) % 360
- 
-    # if cmax equal b then compute h
-    elif cmax == b:
-        h = (60 * ((r - g) / diff) + 240) % 360
- 
-    # if cmax equal zero
-    if cmax == 0:
-        s = 0
-    else:
-        s = (diff / cmax) * 100
- 
-    # compute v
-    v = cmax * 100
-    return h, s, v
-
-def convolution(image, kernel):
- 
-    image_width = image.shape[0]
-    image_height = image.shape[1]
-    kernel_width = kernel.shape[0]
-    kernel_height = kernel.shape[1]
- 
-    output = np.zeros(image.shape)
- 
-    padx = (kernel.shape[0] - 1) // 2
-    pady = (kernel.shape[1] - 1) // 2
- 
-    #blank image that's padded on x and y
-    padded_image = np.zeros((image_width + (2 * pady), image_height + (2 * padx),3))
-    #filled image that's padded on x and y
-    padded_image[padx:padded_image.shape[0] - padx, pady:padded_image.shape[1] - pady] = image
+    kernel_hori = np.zeros((3,3,1))
+    kernel_hori[:,0] = -1
+    kernel_hori[:,2] = 1
+    kernel_hori *= amt
+    img_hori = convolution_grey(image,kernel_hori)
     
-    for i in range(padx):
-        #left padding
-        padded_image[i,pady:padded_image.shape[1]-pady] = image[0,:]
-        
-        #right padding
-        padded_image[(i+image_width+padx),pady:padded_image.shape[1]-pady] = image[image_width-4,:]
-        
-    for j in range(pady):
-        #top padding
-        padded_image[padx:padded_image.shape[0]-padx,j] = image[:,0]
-        #bottom padding
-        padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
-
-    for i in range(image_width):
-        for j in range(image_height):
-            roi = padded_image[i:i + kernel_width, j:j + kernel_height]
-            k1 = (kernel * roi)
-            k2 = np.sum(k1, axis = 0)
-            k3 = np.sum(k2, axis = 0)
-            k3 = np.clip(k3,0,255)
-            output[i][j]=k3
-     
-
+    kernel_vert = np.zeros((3,3,1))
+    kernel_vert[0,:] = -1
+    kernel_vert[2,:] = 1
+    kernel_vert *= amt
+    img_vert = convolution_grey(image,kernel_vert)
+    
+    img_vert=img_vert.astype('uint8')
+    img_hori=img_hori.astype('uint8')
+    
+    output = (img_vert/2) + (img_hori/2)
+    output = np.clip(output,0,255)
     output=output.astype('uint8')
     return output
 
-def gaussian_blur(image, kernel_size):
-    kernel = gaussian_kernel(kernel_size, sigma=math.sqrt(kernel_size))
-    return convolution(image, kernel)
-
-def convolution(image, kernel):
- 
-    image_width = image.shape[0]
-    image_height = image.shape[1]
-    kernel_width = kernel.shape[0]
-    kernel_height = kernel.shape[1]
- 
+def convolution3D(image, kernel):
     output = np.zeros(image.shape)
- 
-    padx = (kernel.shape[0] - 1) // 2
-    pady = (kernel.shape[1] - 1) // 2
- 
-    #blank image that's padded on x and y
-    padded_image = np.zeros((image_width + (2 * pady), image_height + (2 * padx),3))
-    #filled image that's padded on x and y
-    padded_image[padx:padded_image.shape[0] - padx, pady:padded_image.shape[1] - pady] = image
-    
-    for i in range(padx):
-        #left padding
-        padded_image[i,pady:padded_image.shape[1]-pady] = image[0,:]
-        
-        #right padding
-        padded_image[(i+image_width+padx),pady:padded_image.shape[1]-pady] = image[image_width-4,:]
-        
-    for j in range(pady):
-        #top padding
-        padded_image[padx:padded_image.shape[0]-padx,j] = image[:,0]
-        #bottom padding
-        padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
-    
+    padded_image = pad_image(image, kernel)
     show_kernel(kernel[:,:,0],"kernel")
-    for i in range(image_width):
-        for j in range(image_height):
-            roi = padded_image[i:i + kernel_width, j:j + kernel_height]
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1]]
+            show_region(roi[:,:,0],"ROI")
             k1 = (kernel * roi)
             k2 = np.sum(k1, axis = 0)
             k3 = np.sum(k2, axis = 0)
             k3 = np.clip(k3,0,255)
             output[i][j]=k3
-     
+    output=output.astype('uint8')
+    return output
 
+def convolution2D(image, kernel):
+    output = np.zeros(image.shape)
+    padded_image = pad_image(image, kernel)
+    show_kernel(kernel,"kernel")
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1]]
+            show_region(roi[:,:,0],"ROI")
+            k1 = (kernel * roi)
+            k2 = np.sum(k1, axis = 0)
+            k3 = np.sum(k2, axis = 0)
+            k3 = np.clip(k3,0,255)
+            output[i][j]=k3
     output=output.astype('uint8')
     #cv.imshow("Test", output)
+    return output
+
+def convolution_grey(image, kernel):
+    output = np.zeros(image.shape)
+    padded_image = pad_image(image, kernel)
+    show_kernel(kernel,"kernel")
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1],:]
+            show_region(roi[:,:],"ROI")
+            k1 = kernel * roi
+            k4 = abs(np.sum(k1))
+            k4 = np.clip(k4,0,255)
+            if k4 > 50:
+                print(k4 , " \n")
+            output[i,j] = k4 
+        #cv.imshow("Test", output)
     return output
 
 def bilateral_filter(image, kernel_size):
     
     kernel = gaussian_kernel(kernel_size)
-    
-    image_width = image.shape[0]
-    image_height = image.shape[1]
     kernel_width = kernel.shape[0]
     kernel_height = kernel.shape[1]
- 
-    output = np.zeros(image.shape)
- 
-    padx = (kernel.shape[0] - 1) // 2
-    pady = (kernel.shape[1] - 1) // 2
- 
-    #blank image that's padded on x and y
-    padded_image = np.zeros((image_width + (2 * pady), image_height + (2 * padx),3))
-    #filled image that's padded on x and y
-    padded_image[padx:padded_image.shape[0] - padx, pady:padded_image.shape[1] - pady] = image
     
-    for i in range(padx):
-        #left padding
-        padded_image[i,pady:padded_image.shape[1]-pady] = image[0,:]
-        #right padding
-        padded_image[(i+image_width+padx),pady:padded_image.shape[1]-pady] = image[image_width-4,:]
-        
-    for j in range(pady):
-        #top padding
-        padded_image[padx:padded_image.shape[0]-padx,j] = image[:,0]
-        #bottom padding
-        padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
+    output = np.zeros(image.shape)
+    padded_image = pad_image(image, kernel)
+    
 
     show_kernel(kernel[:,:,0],"kernel")
-    for i in range(image_width):
-        for j in range(image_height):
-            roi = padded_image[i:i + kernel_width, j:j + kernel_height,:]
-            centerpix = roi[kernel_width//2,kernel_height//2,:]
-            ##Code Here
-            for rgb in range(0,3):
-                kernel = gaussian_kernel(kernel_size)
-                for k in range(kernel_width):
-                    for l in range(kernel_height):
-                        diff = roi[k,l,rgb] - centerpix[rgb]
-                        if abs(diff) > 10 :
-                            kernel [k,l,rgb] = 0
-                
-                show_kernel(kernel[:,:,rgb], "Kernel")
-                #kernel[:,:,rgb] = normalize(kernel[:,:,rgb],0,1)
-                k1 = (kernel[:,:,rgb] * roi[:,:,rgb])
-                k2 = np.sum(k1, axis = 0)
-                k3 = np.sum(k2, axis = 0)
-                k3 = np.clip(k3,0,255)
-                output[i,j,rgb]=k3
-            show_region(roi, "ROI")
-        #show_progress(output,"TempOutput")
-    return output
-
-def bilateral_filter2(image, kernel_size):
-    
-    kernel = gaussian_kernel(kernel_size)
-    
-    image_width = image.shape[0]
-    image_height = image.shape[1]
-    kernel_width = kernel.shape[0]
-    kernel_height = kernel.shape[1]
- 
-    output = np.zeros(image.shape)
-    #padded_image =    pad_image(image)
-    padx = (kernel.shape[0] - 1) // 2
-    pady = (kernel.shape[1] - 1) // 2
-    
-    #blank image that's padded on x and y
-    padded_image = np.zeros((image_width + (2 * pady), image_height + (2 * padx),3))
-    #filled image that's padded on x and y
-    padded_image[padx:padded_image.shape[0] - padx, pady:padded_image.shape[1] - pady] = image
-    
-
-    for i in range(padx):
-        #left padding
-        padded_image[i,pady:padded_image.shape[1]-pady] = image[0,:]
-        #right padding
-        padded_image[(i+image_width+padx),pady:padded_image.shape[1]-pady] = image[image_width-4,:]
-        
-    for j in range(pady):
-        #top padding
-        padded_image[padx:padded_image.shape[0]-padx,j] = image[:,0]
-        #bottom padding
-        padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
-
-    show_kernel(kernel[:,:,0],"kernel")
-    for i in range(image_width):
-        for j in range(image_height):
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
             roi = padded_image[i:i + kernel_width, j:j + kernel_height,:]
             centerpix = roi[kernel_width//2,kernel_height//2,:]
             centerpixRGB = np.sum(centerpix, axis = 0)
@@ -502,38 +376,11 @@ def bilateral_filter2(image, kernel_size):
 
 def median_filter(image, kernel_size):
     kernel = np.zeros((kernel_size,kernel_size,3))
-    #kernel = 1
-    image_width = image.shape[0]
-    image_height = image.shape[1]
-    kernel_width = kernel.shape[0]
-    kernel_height = kernel.shape[1]
- 
     output = np.zeros(image.shape)
- 
-    padx = (kernel.shape[0] - 1) // 2
-    pady = (kernel.shape[1] - 1) // 2
- 
-    #blank image that's padded on x and y
-    padded_image = np.zeros((image_width + (2 * pady), image_height + (2 * padx),3))
-    #filled image that's padded on x and y
-    padded_image[padx:padded_image.shape[0] - padx, pady:padded_image.shape[1] - pady] = image
-    
-    for i in range(padx):
-        #left padding
-        padded_image[i,pady:padded_image.shape[1]-pady] = image[0,:]
-        
-        #right padding
-        padded_image[(i+image_width+padx),pady:padded_image.shape[1]-pady] = image[image_width-4,:]
-        
-    for j in range(pady):
-        #top padding
-        padded_image[padx:padded_image.shape[0]-padx,j] = image[:,0]
-        #bottom padding
-        padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
-
-    for i in range(image_width):
-        for j in range(image_height):
-            roi = padded_image[i:i + kernel_width, j:j + kernel_height]
+    padded_image = pad_image(image, kernel)
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1]]
             roi = roi**2
             for k in range(0,3):
                 pixel = np.median(roi[:,:,k])
@@ -604,50 +451,88 @@ def normalize(arr, t_min, t_max):
         norm_arr.append(temp)
     return norm_arr
 
-def hsv_to_rgb (color):
-        h,s,v,r,g,b
-        h= color[0]
-        s= color[1]
-        v= color[2]
-        if(s == 0 ):
-            # achromatic (grey)
-            r = g = b = v
-            return [r,g,b]
+def pad_image(image,kernel):
+    
+    image_width = image.shape[0]
+    image_height = image.shape[1]
+    
+    padx = (kernel.shape[0] - 1) // 2
+    pady = (kernel.shape[1] - 1) // 2
+    
+
+    #blank image that's padded on x and y
+    padded_image = np.zeros((image_width + (2 * pady), image_height + (2 * padx),image.shape[2]))
         
-        i = h // 60;            # sector 0 to 5
-        f = h - i;          # factorial part of h
-        p = v * ( 1 - s )
-        q = v * ( 1 - s * f )
-        t = v * ( 1 - s * ( 1 - f ) )
-        if i == 0:
-                r = v
-                g = t
-                b = p
-                
-        elif i == 1:
-                r = q
-                g = v
-                b = p
-                
-        elif i == 2:
-                r = p
-                g = v
-                b = t
-                
-        elif i == 3:
-                r = p
-                g = q
-                b = v
-                
-        elif i == 3:
-                r = t
-                g = p
-                b = v
-                
-        else:  
-                r = v
-                g = p
-                b = q
-                
+    #filled image that's padded on x and y
+    padded_image[padx:padded_image.shape[0] - padx, pady:padded_image.shape[1] - pady] = image
+    
+    for i in range(padx):
+        #left padding
+        padded_image[i,pady:padded_image.shape[1]-pady] = image[0,:]
         
-        return r,g,b
+        #right padding
+        padded_image[(i+image_width+padx),pady:padded_image.shape[1]-pady] = image[image_width-4,:]
+        
+    for j in range(pady):
+        #top padding
+        padded_image[padx:padded_image.shape[0]-padx,j] = image[:,0]
+        #bottom padding
+        padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
+        
+    return padded_image
+
+def bilateral_filter_individual_channels(image, kernel_size):
+    
+    kernel = gaussian_kernel(kernel_size)
+    
+    image_width = image.shape[0]
+    image_height = image.shape[1]
+    kernel_width = kernel.shape[0]
+    kernel_height = kernel.shape[1]
+ 
+    output = np.zeros(image.shape)
+ 
+    padx = (kernel.shape[0] - 1) // 2
+    pady = (kernel.shape[1] - 1) // 2
+ 
+    #blank image that's padded on x and y
+    padded_image = np.zeros((image_width + (2 * pady), image_height + (2 * padx),3))
+    #filled image that's padded on x and y
+    padded_image[padx:padded_image.shape[0] - padx, pady:padded_image.shape[1] - pady] = image
+    
+    for i in range(padx):
+        #left padding
+        padded_image[i,pady:padded_image.shape[1]-pady] = image[0,:]
+        #right padding
+        padded_image[(i+image_width+padx),pady:padded_image.shape[1]-pady] = image[image_width-4,:]
+        
+    for j in range(pady):
+        #top padding
+        padded_image[padx:padded_image.shape[0]-padx,j] = image[:,0]
+        #bottom padding
+        padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
+
+    show_kernel(kernel[:,:,0],"kernel")
+    for i in range(image_width):
+        for j in range(image_height):
+            roi = padded_image[i:i + kernel_width, j:j + kernel_height,:]
+            centerpix = roi[kernel_width//2,kernel_height//2,:]
+            ##Code Here
+            for rgb in range(0,3):
+                kernel = gaussian_kernel(kernel_size)
+                for k in range(kernel_width):
+                    for l in range(kernel_height):
+                        diff = roi[k,l,rgb] - centerpix[rgb]
+                        if abs(diff) > 10 :
+                            kernel [k,l,rgb] = 0
+                
+                show_kernel(kernel[:,:,rgb], "Kernel")
+                #kernel[:,:,rgb] = normalize(kernel[:,:,rgb],0,1)
+                k1 = (kernel[:,:,rgb] * roi[:,:,rgb])
+                k2 = np.sum(k1, axis = 0)
+                k3 = np.sum(k2, axis = 0)
+                k3 = np.clip(k3,0,255)
+                output[i,j,rgb]=k3
+            show_region(roi, "ROI")
+        #show_progress(output,"TempOutput")
+    return output
