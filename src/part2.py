@@ -11,22 +11,23 @@ def run():
     images = np.empty(len(onlyfiles), dtype=object)
     for n in range(0, len(onlyfiles)):
         images[n] = cv.imread(join(mypath,onlyfiles[n]),cv.IMREAD_UNCHANGED )
+        
     
-    images[0] = scale_image(images[0],0.15)
-    images[1] = scale_image(images[1],0.3)
-    images[2] = scale_image(images[2],0.1)
-    images[3] = scale_image(images[3],0.25)
+    #images[0] = scale_image(images[0],0.15)
+    #images[1] = scale_image(images[1],0.3)
+    #images[2] = scale_image(images[2],0.1)
+    #images[3] = scale_image(images[3],0.25)
 
     noisyImage = images[3]
-    kernalSize = 5
+    kernalSize = 9
+    
+    Gblurred = gaussian_blur(noisyImage,kernalSize)
+    Gblurred = scale_image(Gblurred,3.0)
+    noisyImage = scale_image(noisyImage,3.0)
+    
     cv.imshow("Before", noisyImage)
-    #blurred = box_blur(images[3],kernalSize)    
-    #cv.imshow("After", blurred)
-
-    Gblurred = median_filter(images[3],kernalSize)    
     cv.imshow("After", Gblurred)
         
-    #blurry_image = cv.blur(noisyImage, ksize)
 
     cv.waitKey(0)
     cv.destroyAllWindows()

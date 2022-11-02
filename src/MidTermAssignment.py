@@ -179,7 +179,7 @@ def scale_image(img, percentage: float):
     width = int(img.shape[1] * percentage)
     height = int(img.shape[0] * percentage)
     dim = (width, height)
-    return cv.resize(img,dim,cv.INTER_AREA)
+    return cv.resize(img,dim,interpolation = cv.INTER_NEAREST)
 
 def image_temp(img, amt):
     
@@ -368,7 +368,8 @@ def convolution(image, kernel):
         padded_image[padx:padded_image.shape[0]-padx,j] = image[:,0]
         #bottom padding
         padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
-
+    
+    show_kernel(kernel[:,:,0],"kernel")
     for i in range(image_width):
         for j in range(image_height):
             roi = padded_image[i:i + kernel_width, j:j + kernel_height]
@@ -380,10 +381,13 @@ def convolution(image, kernel):
      
 
     output=output.astype('uint8')
+    #cv.imshow("Test", output)
     return output
 
-def bilateral_filter(image, kernel):
- 
+def bilateral_filter(image, kernel_size):
+    
+    kernel = gaussian_kernel(kernel_size)
+    
     image_width = image.shape[0]
     image_height = image.shape[1]
     kernel_width = kernel.shape[0]
@@ -411,23 +415,90 @@ def bilateral_filter(image, kernel):
         #bottom padding
         padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
 
+    show_kernel(kernel[:,:,0],"kernel")
     for i in range(image_width):
         for j in range(image_height):
-            roi = padded_image[i:i + kernel_width, j:j + kernel_height]
-            
+            roi = padded_image[i:i + kernel_width, j:j + kernel_height,:]
+            centerpix = roi[kernel_width//2,kernel_height//2,:]
             ##Code Here
+            for rgb in range(0,3):
+                kernel = gaussian_kernel(kernel_size)
+                for k in range(kernel_width):
+                    for l in range(kernel_height):
+                        diff = roi[k,l,rgb] - centerpix[rgb]
+                        if abs(diff) > 10 :
+                            kernel [k,l,rgb] = 0
+                
+                show_kernel(kernel[:,:,rgb], "Kernel")
+                #kernel[:,:,rgb] = normalize(kernel[:,:,rgb],0,1)
+                k1 = (kernel[:,:,rgb] * roi[:,:,rgb])
+                k2 = np.sum(k1, axis = 0)
+                k3 = np.sum(k2, axis = 0)
+                k3 = np.clip(k3,0,255)
+                output[i,j,rgb]=k3
+            show_region(roi, "ROI")
+        #show_progress(output,"TempOutput")
+    return output
+
+def bilateral_filter2(image, kernel_size):
+    
+    kernel = gaussian_kernel(kernel_size)
+    
+    image_width = image.shape[0]
+    image_height = image.shape[1]
+    kernel_width = kernel.shape[0]
+    kernel_height = kernel.shape[1]
+ 
+    output = np.zeros(image.shape)
+    #padded_image =    pad_image(image)
+    padx = (kernel.shape[0] - 1) // 2
+    pady = (kernel.shape[1] - 1) // 2
+    
+    #blank image that's padded on x and y
+    padded_image = np.zeros((image_width + (2 * pady), image_height + (2 * padx),3))
+    #filled image that's padded on x and y
+    padded_image[padx:padded_image.shape[0] - padx, pady:padded_image.shape[1] - pady] = image
+    
+
+    for i in range(padx):
+        #left padding
+        padded_image[i,pady:padded_image.shape[1]-pady] = image[0,:]
+        #right padding
+        padded_image[(i+image_width+padx),pady:padded_image.shape[1]-pady] = image[image_width-4,:]
+        
+    for j in range(pady):
+        #top padding
+        padded_image[padx:padded_image.shape[0]-padx,j] = image[:,0]
+        #bottom padding
+        padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
+
+    show_kernel(kernel[:,:,0],"kernel")
+    for i in range(image_width):
+        for j in range(image_height):
+            roi = padded_image[i:i + kernel_width, j:j + kernel_height,:]
+            centerpix = roi[kernel_width//2,kernel_height//2,:]
+            centerpixRGB = np.sum(centerpix, axis = 0)
+            kernel = gaussian_kernel(kernel_size)
+            for k in range(kernel_width):
+                for l in range(kernel_height):
+                    pixRGBsum = np.sum(roi[k,l], axis = 0)
+                    diff = pixRGBsum - centerpixRGB
+                    if abs(diff) > 10 :
+                        kernel [k,l] = 0
             
-            
+            show_kernel(kernel[:,:,0], "Kernel")
+            #kernel[:,:,rgb] = normalize(kernel[:,:,rgb],0,1)
             k1 = (kernel * roi)
             k2 = np.sum(k1, axis = 0)
             k3 = np.sum(k2, axis = 0)
             k3 = np.clip(k3,0,255)
-            output[i][j]=k3
-     
-
+            output[i][j][:]=k3
+            show_region(roi, "ROI")
+        show_progress(output,"TempOutput")
+        
+    output = np.clip(output,0,255)
     output=output.astype('uint8')
     return output
-
 
 def median_filter(image, kernel_size):
     kernel = np.zeros((kernel_size,kernel_size,3))
@@ -497,8 +568,41 @@ def gaussian_kernel(size, sigma=1):
  
     return kernel_3D
 
+def show_kernel(kernel, title):
+    kernel = kernel*255*40
+    kernel = np.clip(kernel,0,255)
+    img = np.zeros((kernel.shape[0],kernel.shape[1]),dtype=np.uint8)
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            img[i,j]= kernel[i,j]
+        
+    img=img.astype('uint8')
+    img = scale_image(img,10)
+    cv.imshow(title, img)
+
+def show_region(region, title):
+    region = scale_image(region,15)
+    region=region.astype('uint8')
+    cv.imshow(title, region)
+    
+def show_progress(region, title):
+    region = scale_image(region,10)
+    region=region.astype('uint8')
+    cv.imshow(title, region)
+    
 def dnorm(x, mu, sd):
     return 1 / (np.sqrt(2 * np.pi) * sd) * np.e ** (-np.power((x - mu) / sd, 2) / 2)
+
+def normalize(arr, t_min, t_max):
+    norm_arr = []
+    diff = t_max - t_min
+    max1 = arr.max()
+    min1 = arr.min()
+    diff_arr = max1 - min1
+    for i in arr:
+        temp = (((i - arr.min())*diff)/diff_arr) + t_min
+        norm_arr.append(temp)
+    return norm_arr
 
 def hsv_to_rgb (color):
         h,s,v,r,g,b
