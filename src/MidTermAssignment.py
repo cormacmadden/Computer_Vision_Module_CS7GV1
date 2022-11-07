@@ -7,17 +7,6 @@ import numpy as np
 import pandas as pd
 import math
 
-def brighten_image(img,amt):
-    img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    h,s,v = cv.split(img)
-    v=v.astype('float32')
-    v=v+amt
-    v = np.clip(v,0,255)
-    v=v.astype('uint8')
-    img = cv.merge([h,s,v])
-    processedImage = cv.cvtColor(img, cv.COLOR_HSV2BGR)
-    return processedImage
-
 def brighten(img, amt):
     output = img
     r,g,b = split(img)
@@ -45,17 +34,6 @@ def brighten(img, amt):
             output[i,j] = [b[i,j], g[i,j], r[i,j]]
         
     return output
-
-def saturate_image(img,amt):
-    img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    h,s,v = cv.split(img)
-    s=s.astype('float32')
-    s=s*amt
-    s = np.clip(s,0,255)
-    s=s.astype('uint8')
-    img = cv.merge([h,s,v])
-    processedImage = cv.cvtColor(img, cv.COLOR_HSV2BGR)
-    return processedImage
 
 def sat_image(img,amt):
     #h,s,v = cv.split(img)
@@ -293,7 +271,7 @@ def convolution3D(image, kernel):
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1]]
-            show_region(roi[:,:,0],"ROI")
+            #show_region(roi[:,:,0],"ROI")
             k1 = (kernel * roi)
             k2 = np.sum(k1, axis = 0)
             k3 = np.sum(k2, axis = 0)
@@ -336,6 +314,17 @@ def convolution_grey(image, kernel):
         #cv.imshow("Test", output)
     return output
 
+def sharpening_filter(image, amt):
+    kernel = np.zeros((3,3,1))
+    kernel[1,0,0]=-1
+    kernel[0,1,0]=-1
+    kernel[1,2,0]=-1
+    kernel[2,1,0]=-1
+    kernel[1,1,0]=5
+    kernel*=amt
+    output = convolution2D(image,kernel)
+    return output
+
 def bilateral_filter(image, kernel_size):
     
     kernel = gaussian_kernel(kernel_size)
@@ -361,6 +350,7 @@ def bilateral_filter(image, kernel_size):
                         kernel [k,l] = 0
             
             show_kernel(kernel[:,:,0], "Kernel")
+            #     ####distance=(R1+G1+B1)-(R2+G2+B2)
             #kernel[:,:,rgb] = normalize(kernel[:,:,rgb],0,1)
             k1 = (kernel * roi)
             k2 = np.sum(k1, axis = 0)
@@ -387,7 +377,6 @@ def median_filter(image, kernel_size):
                 pixel = np.sqrt(pixel)
                 pixel = np.clip(pixel,0,255)
                 output[i,j,k]=pixel
-     
 
     output=output.astype('uint8')
     return output
@@ -481,7 +470,70 @@ def pad_image(image,kernel):
         
     return padded_image
 
-def bilateral_filter_individual_channels(image, kernel_size):
+def subsample_image(image):
+    kernel = np.zeros((2,2,3))
+    output = np.zeros((int((image.shape[0]/2) +1),int((image.shape[1]/2)+1),3))
+    padded_image = pad_image(image, kernel)
+    for i in range(0,image.shape[0],2):
+        for j in range(0,image.shape[1],2):
+            roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1]]
+            roi = roi**2
+            for k in range(0,3):
+                pixel = np.median(roi[:,:,k])
+                pixel = np.sqrt(pixel)
+                pixel = np.clip(pixel,0,255)
+                output[int(i/2),int(j/2),k]=pixel
+
+    output=output.astype('uint8')
+    return output
+
+def gaussian_pyramid(image):
+    image = gaussian_blur(image,3)
+    image = subsample_image(image)
+    return image
+
+def scale_NN(image, amt):
+    output = np.zeros((int(image.shape[0]*amt),int(image.shape[1]*amt),3))
+    for i in range(0,output.shape[0]):
+        for j in range(0,output.shape[1]):
+            transformedI = int((i/output.shape[0])*image.shape[0])
+            transformedJ = int((j/output.shape[1])*image.shape[1])
+            output[i,j] = image[transformedI,transformedJ]
+    output=output.astype('uint8')
+    return output
+
+def scale_bilinear_interpolation(image, amt):
+    output = np.zeros((int(image.shape[0]*amt),int(image.shape[1]*amt),3))
+    for i in range(0,output.shape[0]):
+        for j in range(0,output.shape[1]):
+            transformedI = (i/output.shape[0])*image.shape[0]
+            transformedJ = (j/output.shape[1])*image.shape[1]
+            for rgb in range(0,3):
+                if int(math.ceil(transformedI)) >= image.shape[0] :
+                    iceil = image.shape[0]-1
+                else:
+                    iceil = int(math.ceil(transformedI))
+                    
+                if int(math.ceil(transformedJ)) >= image.shape[1] :
+                    jceil = image.shape[1]-1
+                else:
+                    jceil = int(math.ceil(transformedJ))
+                    
+                ifloor = int(math.floor(transformedI))
+                jfloor = int(math.floor(transformedJ))
+                x1y1 = image[ifloor,jfloor,rgb]
+                x2y2 = image[iceil,jceil,rgb]
+                x1y2 = image[ifloor,jceil,rgb]
+                x2y1 = image[iceil,jfloor,rgb]
+                iweightedAvg1 = x1y1*1-(transformedI%1) + x2y1*transformedI%1
+                iweightedAvg2 = x1y2*1-(transformedI%1) + x2y2*transformedI%1
+                finalPix = iweightedAvg1*(1-(transformedJ%1)) + iweightedAvg2*(transformedJ%1)
+                
+                output[i,j,rgb] = finalPix
+    output=output.astype('uint8')
+    return output
+
+def bilateral_blur_filter_individual_channels(image, kernel_size):
     
     kernel = gaussian_kernel(kernel_size)
     
@@ -536,3 +588,11 @@ def bilateral_filter_individual_channels(image, kernel_size):
             show_region(roi, "ROI")
         #show_progress(output,"TempOutput")
     return output
+
+def image_flip(img):
+    
+    #img[i,j] = 
+    return img
+
+def invert_colors(img):
+    return img

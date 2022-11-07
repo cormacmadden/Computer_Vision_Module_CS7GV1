@@ -5,7 +5,7 @@ from os.path import isfile, join
 
 def run():
     cv.destroyAllWindows()
-
+    
     mypath='../Photos/Part2'
     onlyfiles = [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
     images = np.empty(len(onlyfiles), dtype=object)
@@ -18,12 +18,12 @@ def run():
     #images[2] = scale_image(images[2],0.1)
     #images[3] = scale_image(images[3],0.25)
 
-    noisyImage = images[3]
+    noisyImage = images[0]
     kernalSize = 9
     
-    Gblurred = sobel_filter(noisyImage,1)
-    Gblurred = scale_image(Gblurred,3.0)
-    noisyImage = scale_image(noisyImage,3.0)
+    Gblurred = gaussian_pyramid(noisyImage)
+    #Gblurred = scale_image(Gblurred,3.0)
+    #noisyImage = scale_image(noisyImage,3.0)
     
     cv.imshow("Before", noisyImage)
     cv.imshow("After", Gblurred)
