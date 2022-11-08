@@ -1,8 +1,5 @@
-from macpath import split
 from unittest import result
-from sklearn.datasets import load_sample_images
-from matplotlib import pyplot as plt
-import cv2 as cv
+import cpytv2 as cv
 import numpy as np
 import pandas as pd
 import math
