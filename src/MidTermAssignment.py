@@ -1,5 +1,4 @@
-from unittest import result
-import cpytv2 as cv
+import cv2 as cv
 import numpy as np
 import pandas as pd
 import math
@@ -126,9 +125,7 @@ def threshold(img, amt):
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             if(greyed[i,j]<amt):greyed[i,j] = 0
-            else: greyed[i,j] = 1
-    
-    greyed = greyed*255
+            else: greyed[i,j] = 255
     return greyscale_to_rgb(greyed)
     
 def split(img):
@@ -145,7 +142,7 @@ def solarization(img, amt = 1):
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             if ((r[i,j] == 255) and (g[i,j] == 255) and (b[i,j] == 255 )):
-                output[i][j] = [0,0,0]
+                output[i][j] = output[i][j]*-1
                 
     output = output.astype('uint8')
     return output
@@ -158,9 +155,7 @@ def scale_image(img, percentage: float):
 
 def image_temp(img, amt):
     
-    b = img[:,:,0]
-    g = img[:,:,1]
-    r = img[:,:,2]
+    r,g,b = split(img)
     b=b.astype('float32')
     r=r.astype('float32')
     
@@ -184,9 +179,7 @@ def image_temp(img, amt):
 
 def image_tint(img, amt):
     
-    b = img[:,:,0]
-    g = img[:,:,1]
-    r = img[:,:,2]
+    r,g,b = split(img)
     g=g.astype('float32')
     
     g = g[:,:] + amt
