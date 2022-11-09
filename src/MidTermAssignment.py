@@ -1,35 +1,26 @@
 import cv2 as cv
 import numpy as np
-import pandas as pd
 import math
 
-def brighten(img, amt):
-    output = img
-    r,g,b = split(img)
-    
-    b1 = (b[:,:]/255) * amt
-    g1 = (g[:,:]/255) * amt
-    r1 = (r[:,:]/255) * amt
-    
-    b = b[:,:] + b1
-    r = r[:,:] + r1
-    g = g[:,:] + g1
 
+def clip(r,g,b):
     b = np.clip(b,0,255)
     r = np.clip(r,0,255)
     g = np.clip(g,0,255)
-    
+    return r,g,b
+
+def to_uint8(r,g,b):
     b=b.astype('uint8')
     g=g.astype('uint8')
-    r=r.astype('uint8')   
-     
-    output=output.astype('uint8')
-
-    for i in range(img.shape[0]):
-        for j in range(img.shape[1]):
-            output[i,j] = [b[i,j], g[i,j], r[i,j]]
-        
-    return output
+    r=r.astype('uint8')  
+    return r,g,b
+    
+def split(img):
+    b = img[:,:,0]
+    g = img[:,:,1]
+    r = img[:,:,2]
+    rgb = r,g,b
+    return rgb
 
 def sat_image(img,amt):
     #h,s,v = cv.split(img)
@@ -42,116 +33,56 @@ def sat_image(img,amt):
     #processedImage = cv.cvtColor(img, cv.COLOR_HSV2BGR)
     return processedImage
 
-def greyscale(img):
+def brighten(img, amt):
+    output = img
     r,g,b = split(img)
-    b=b.astype('float32')
-    g=g.astype('float32')
-    r=r.astype('float32')
+    
+    r = r[:,:] + ((r[:,:]/255) * amt)
+    g = g[:,:] + ((g[:,:]/255) * amt)
+    b = b[:,:] + ((b[:,:]/255) * amt)
 
-    b = b/255
-    g = g/255
-    r = r/255
+    r,g,b = clip(r,g,b)
+    r,g,b =to_uint8(r,g,b)
     
-    #Gamma transformation 
-    for i in range(r.shape[0]):
-        for j in range(r.shape[1]):
-            if(r[i,j] < 0.04045): r[i,j] = r[i,j]/12.92
-            if(b[i,j] < 0.04045): b[i,j] = b[i,j]/12.92
-            if(g[i,j] < 0.04045): g[i,j] = g[i,j]/12.92
-            
-    r = ((r+0.055)/1.055)**2.4
-    g = ((g+0.055)/1.055)**2.4
-    b = ((b+0.055)/1.055)**2.4
-    
-    Y = 0.2126*r + 0.7152*g + 0.0722*b
-    output = np.zeros((img.shape[0],img.shape[1],1))
-    ytest = 1.055*(Y[0,0]**(1/2.4))-0.055
-    for i in range(img.shape[0]):
-        for j in range(img.shape[1]):
-            if Y[i,j] <= 0.0031308:
-                output[i,j] = 12.92*Y[i,j]
-            else:
-                output[i,j] = (1.055*(Y[i,j]**(1/2.4)))-0.055
-    
-    output = output*255        
-    output = np.clip(output,0,255)
-    output = output.astype('uint8')
-    return output
-
-def greyscale_to_rgb(img):
-    output = np.zeros((img.shape[0],img.shape[1],3))
-    for i in range(img.shape[0]):
-        for j in range(img.shape[1]):
-            output[i,j,0] = img[i,j]
-            output[i,j,1] = img[i,j]
-            output[i,j,2] = img[i,j]
-            
-    output = np.clip(output,0,255)
     output=output.astype('uint8')
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j] = [b[i,j], g[i,j], r[i,j]]
     return output
 
-def contrast_image(img,contrast, brightness):
-    #new_image = np.zeros(img.shape, img.dtype)
+def contrast_image_broken(img, contrast):
+    test = img
+    test=test.astype('float64')
+    for rgb in range(0,2):
+        test[:,:,rgb] = (img[:,:,rgb]- 128) * contrast + 128
+        test = np.clip(test,0,255)
+        
+    test = test.astype('uint8')
+    return test
+    
+def contrast_image(img,contrast):
     output = img
     r,g,b = split(output)
-    b=b.astype('float32')
-    g=g.astype('float32')
-    r=r.astype('float32')
-    
+    b=b.astype('float64')
+    g=g.astype('float64')
+    r=r.astype('float64')
+
     r = (r-128) * contrast + 128
     g = (g-128) * contrast + 128
     b = (b-128) * contrast + 128
     
-    b = np.clip(b,0,255)
-    r = np.clip(r,0,255)
-    g = np.clip(g,0,255)
-
-    b=b.astype('uint8')
-    g=g.astype('uint8')
-    r=r.astype('uint8')
+    r,g,b = clip(r,g,b)
+    r,g,b = to_uint8(r,g,b)
      
     output=output.astype('uint8')
 
-    for i in range(img.shape[0]):
+    for i in range(img.shape[0]):   
         for j in range(img.shape[1]):
             output[i,j] = [b[i,j], g[i,j], r[i,j]]
     
     output = np.clip(output,0,255)
     output=output.astype('uint8')
     return output
-
-def threshold(img, amt):
-    greyed = greyscale(img)
-    for i in range(img.shape[0]):
-        for j in range(img.shape[1]):
-            if(greyed[i,j]<amt):greyed[i,j] = 0
-            else: greyed[i,j] = 255
-    return greyscale_to_rgb(greyed)
-    
-def split(img):
-    b = img[:,:,0]
-    g = img[:,:,1]
-    r = img[:,:,2]
-    rgb = r,g,b
-    return rgb
-
-def solarization(img, amt = 1):
-    output = brighten(img, 100)
-    r,g,b = split(output)
-
-    for i in range(img.shape[0]):
-        for j in range(img.shape[1]):
-            if ((r[i,j] == 255) and (g[i,j] == 255) and (b[i,j] == 255 )):
-                output[i][j] = output[i][j]*-1
-                
-    output = output.astype('uint8')
-    return output
-
-def scale_image(img, percentage: float):
-    width = int(img.shape[1] * percentage)
-    height = int(img.shape[0] * percentage)
-    dim = (width, height)
-    return cv.resize(img,dim,interpolation = cv.INTER_NEAREST)
 
 def image_temp(img, amt):
     
@@ -165,8 +96,7 @@ def image_temp(img, amt):
     b = np.clip(b,0,255)
     r = np.clip(r,0,255)
     
-    b=b.astype('uint8')
-    r=r.astype('uint8')
+    r,g,b =to_uint8(r,g,b)
 
     output = np.zeros((img.shape[0],img.shape[1],3))
     output=output.astype('uint8')
@@ -196,6 +126,79 @@ def image_tint(img, amt):
             output[i,j] = [b[i,j], g[i,j], r[i,j]]
     
     return output
+
+def greyscale(img):
+    r,g,b = split(img)
+
+    b = b/255
+    g = g/255
+    r = r/255
+    
+    #Gamma expansion 
+    for i in range(r.shape[0]):
+        for j in range(r.shape[1]):
+            if(r[i,j] < 0.04045): r[i,j] = r[i,j]/12.92
+            if(b[i,j] < 0.04045): b[i,j] = b[i,j]/12.92
+            if(g[i,j] < 0.04045): g[i,j] = g[i,j]/12.92
+    r = ((r+0.055)/1.055)**2.4
+    g = ((g+0.055)/1.055)**2.4
+    b = ((b+0.055)/1.055)**2.4
+    
+    Y = 0.2126*r + 0.7152*g + 0.0722*b
+    
+    #Gamma Compression
+    output = np.zeros((img.shape[0],img.shape[1],1))
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            if Y[i,j] <= 0.0031308:
+                output[i,j] = 12.92*Y[i,j]
+            else:
+                output[i,j] = (1.055*(Y[i,j]**(1/2.4)))-0.055
+    
+    output = output*255        
+    output = np.clip(output,0,255)
+    output = output.astype('uint8')
+    return output
+
+def greyscale_to_rgb(img):
+    output = np.zeros((img.shape[0],img.shape[1],3))
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j,0] = img[i,j]
+            output[i,j,1] = img[i,j]
+            output[i,j,2] = img[i,j]
+            
+    output = np.clip(output,0,255)
+    output=output.astype('uint8')
+    return output
+
+def threshold(img, amt):
+    greyed = greyscale(img)
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            if(greyed[i,j]<amt):greyed[i,j] = 0
+            else: greyed[i,j] = 255
+    return greyscale_to_rgb(greyed)
+
+def solarization(img, amt = 1):
+    output = brighten(img, 100)
+    r,g,b = split(output)
+    r = r*(-1) + 255
+    g = g*(-1) + 255
+    b = b*(-1) + 255
+    
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j] = [b[i,j], g[i,j], r[i,j]]
+                
+    output = output.astype('uint8')
+    return output
+
+def scale_image(img, percentage: float):
+    width = int(img.shape[1] * percentage)
+    height = int(img.shape[0] * percentage)
+    dim = (width, height)
+    return cv.resize(img,dim,interpolation = cv.INTER_NEAREST)
 
 def box_blur(img, amt):
     arr = np.zeros((amt,amt,3))
@@ -394,7 +397,7 @@ def gaussian_kernel(size, sigma=1):
  
     return kernel_3D
 
-def show_kernel(kernel, title):
+def show_kercan nel(kernel, title):
     kernel = kernel*255*40
     kernel = np.clip(kernel,0,255)
     img = np.zeros((kernel.shape[0],kernel.shape[1]),dtype=np.uint8)
@@ -579,10 +582,23 @@ def bilateral_blur_filter_individual_channels(image, kernel_size):
         #show_progress(output,"TempOutput")
     return output
 
-def image_flip(img):
-    
-    #img[i,j] = 
-    return img
+def image_flip_horizontal(img):
+    output = img
+    r,g,b = split(img)
+    output=output.astype('uint8')
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j] = b[i,img.shape[1]-1-j], g[i,img.shape[1]-1-j], r[i,img.shape[1]-1-j]
+    return output
+
+def image_flip_vertical(img):
+    output = img
+    r,g,b = split(img)
+    output=output.astype('uint8')
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j] = b[img.shape[0]-1-i,j], g[img.shape[0]-1-i,j], r[img.shape[0]-1-i,j]
+    return output
 
 def invert_colors(img):
     return img

@@ -5,3 +5,5 @@ __pycache__/
 Lab1.ipynb
 Lab1.py
 *.docx
+*.svg
+*.tmp

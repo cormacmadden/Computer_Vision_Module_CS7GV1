@@ -1,4 +1,3 @@
-from ctypes import resize
 from MidTermAssignment import *
 import os
 
@@ -15,26 +14,28 @@ def run():
     images[1] = scale_image(images[1],0.3)
     images[2] = scale_image(images[2],0.1)
     
-    for img in images:
-        brightened = brighten(img,100)
-        warmed = image_temp(img, 50)
-        cooled = image_temp(img, -50)
-        tinted = image_tint(img, -50)
-        contrasted = contrast_image(img,2,5)
-        solarized = solarization(img)
-        greyed = greyscale(img)
-        greyed = greyscale_to_rgb(greyed)
-        threshed = threshold(img, 128)
-        flipped = image_flip(img)
-        Hori = np.concatenate((img, brightened), axis=1)
-        Hori = np.concatenate((Hori, cooled), axis=1)
-        Hori = np.concatenate((Hori, warmed), axis=1)
-        Hori = np.concatenate((Hori, tinted), axis=1)
-        Hori = np.concatenate((Hori, contrasted), axis=1)
-        Hori = np.concatenate((Hori, solarized), axis=1)
-        Hori = np.concatenate((Hori, greyed), axis=1)
-        Hori = np.concatenate((Hori, threshed), axis=1)
-        cv.imshow("Before/After", Hori)
+    #for img in images:
+    img = images[2]
+    brightened = brighten(img,100)
+    warmed = image_temp(img, 50)
+    cooled = image_temp(img, -50)
+    tinted = image_tint(img, -50)
+    contrasted = contrast_image(img,2)
+    solarized = solarization(img)
+    greyed = greyscale(img)
+    greyed = greyscale_to_rgb(greyed)
+    threshed = threshold(img, 128)
+    flipped = image_flip_vertical(img)
+    cv.imshow("Test", flipped)
+    Hori = np.concatenate((img, brightened), axis=1)
+    Hori = np.concatenate((Hori, cooled), axis=1)
+    Hori = np.concatenate((Hori, warmed), axis=1)
+    Hori = np.concatenate((Hori, tinted), axis=1)
+    Hori = np.concatenate((Hori, contrasted), axis=1)
+    Hori = np.concatenate((Hori, solarized), axis=1)
+    Hori = np.concatenate((Hori, greyed), axis=1)
+    Hori = np.concatenate((Hori, threshed), axis=1)
+    cv.imshow("Before/After", Hori)
 
         #cv.imshow("Before/After", greyed) 
     
