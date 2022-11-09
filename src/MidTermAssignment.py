@@ -1,8 +1,10 @@
 import cv2 as cv
 import numpy as np
 import math
+from copy import deepcopy
 
 
+position = (10,20)
 def clip(r,g,b):
     b = np.clip(b,0,255)
     r = np.clip(r,0,255)
@@ -48,6 +50,8 @@ def brighten(img, amt):
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             output[i,j] = [b[i,j], g[i,j], r[i,j]]
+            
+    cv.putText(output,"Exposure",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def contrast_image_broken(img, contrast):
@@ -82,6 +86,7 @@ def contrast_image(img,contrast):
     
     output = np.clip(output,0,255)
     output=output.astype('uint8')
+    cv.putText(output,"Contrast",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def image_temp(img, amt):
@@ -104,7 +109,7 @@ def image_temp(img, amt):
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             output[i,j] = [b[i,j], g[i,j], r[i,j]]
-    
+    cv.putText(output,"Temperature",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def image_tint(img, amt):
@@ -124,7 +129,7 @@ def image_tint(img, amt):
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             output[i,j] = [b[i,j], g[i,j], r[i,j]]
-    
+    cv.putText(output,"Tint",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def greyscale(img):
@@ -158,6 +163,7 @@ def greyscale(img):
     output = output*255        
     output = np.clip(output,0,255)
     output = output.astype('uint8')
+    cv.putText(output,"Greyscale",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def greyscale_to_rgb(img):
@@ -170,6 +176,7 @@ def greyscale_to_rgb(img):
             
     output = np.clip(output,0,255)
     output=output.astype('uint8')
+    
     return output
 
 def threshold(img, amt):
@@ -180,9 +187,9 @@ def threshold(img, amt):
             else: greyed[i,j] = 255
     return greyscale_to_rgb(greyed)
 
-def solarization(img, amt = 1):
-    output = brighten(img, 100)
-    r,g,b = split(output)
+def color_invert(img):
+    output = np.zeros((img.shape[0],img.shape[1],3))
+    r,g,b = split(img)
     r = r*(-1) + 255
     g = g*(-1) + 255
     b = b*(-1) + 255
@@ -192,6 +199,24 @@ def solarization(img, amt = 1):
             output[i,j] = [b[i,j], g[i,j], r[i,j]]
                 
     output = output.astype('uint8')
+    cv.putText(output,"Inverted Color",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    return output
+
+def solarize(img, threshold):
+    output = np.zeros((img.shape[0],img.shape[1],3))
+    output = deepcopy(img)
+    
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            for rgb in range(0,3):
+                pix = output[i,j,rgb]
+                if(pix > threshold):
+                    pix = pix*(-1) + 255
+                    pix = pix.astype('uint8')
+                    output[i,j, rgb] = pix
+                
+    output = output.astype('uint8')
+    cv.putText(output,"Solarized",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def scale_image(img, percentage: float):
@@ -397,7 +422,7 @@ def gaussian_kernel(size, sigma=1):
  
     return kernel_3D
 
-def show_kercan nel(kernel, title):
+def show_kernel(kernel, title):
     kernel = kernel*255*40
     kernel = np.clip(kernel,0,255)
     img = np.zeros((kernel.shape[0],kernel.shape[1]),dtype=np.uint8)
@@ -589,6 +614,7 @@ def image_flip_horizontal(img):
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             output[i,j] = b[i,img.shape[1]-1-j], g[i,img.shape[1]-1-j], r[i,img.shape[1]-1-j]
+    cv.putText(output,"Flip Horizontal",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def image_flip_vertical(img):
@@ -598,7 +624,5 @@ def image_flip_vertical(img):
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             output[i,j] = b[img.shape[0]-1-i,j], g[img.shape[0]-1-i,j], r[img.shape[0]-1-i,j]
+    cv.putText(output,"Flip Vertical",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
-
-def invert_colors(img):
-    return img

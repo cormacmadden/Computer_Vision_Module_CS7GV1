@@ -1,7 +1,9 @@
 from MidTermAssignment import *
 import os
 
+
 def run():
+  
     cv.destroyAllWindows()
     fileDir = os.path.dirname(__file__)
     mypath = os.path.join(fileDir, '../Photos/Part1')
@@ -21,21 +23,27 @@ def run():
     cooled = image_temp(img, -50)
     tinted = image_tint(img, -50)
     contrasted = contrast_image(img,2)
-    solarized = solarization(img)
+    solarized = solarize(img,190)
+    inverted = color_invert(img)
     greyed = greyscale(img)
     greyed = greyscale_to_rgb(greyed)
     threshed = threshold(img, 128)
-    flipped = image_flip_vertical(img)
-    cv.imshow("Test", flipped)
+    flippedH = image_flip_horizontal(img)
+    flippedV = image_flip_vertical(img)
     Hori = np.concatenate((img, brightened), axis=1)
-    Hori = np.concatenate((Hori, cooled), axis=1)
-    Hori = np.concatenate((Hori, warmed), axis=1)
-    Hori = np.concatenate((Hori, tinted), axis=1)
+    Hori = np.concatenate((Hori, flippedH), axis=1)
+    Hori = np.concatenate((Hori, flippedV), axis=1)
     Hori = np.concatenate((Hori, contrasted), axis=1)
-    Hori = np.concatenate((Hori, solarized), axis=1)
-    Hori = np.concatenate((Hori, greyed), axis=1)
-    Hori = np.concatenate((Hori, threshed), axis=1)
-    cv.imshow("Before/After", Hori)
+    Hori = np.concatenate((Hori, cooled), axis=1)
+    
+    Hori2 = np.concatenate((warmed, tinted), axis=1)
+    Hori2 = np.concatenate((Hori2, greyed), axis=1)
+    Hori2 = np.concatenate((Hori2, threshed), axis=1)
+    Hori2 = np.concatenate((Hori2, solarized), axis=1)
+    Hori2 = np.concatenate((Hori2, inverted), axis=1)
+    
+    grid = np.concatenate((Hori, Hori2), axis=0)
+    cv.imshow("Before/After", grid)
 
         #cv.imshow("Before/After", greyed) 
     
