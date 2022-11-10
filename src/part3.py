@@ -1,32 +1,33 @@
 from ctypes import resize
 from MidTermAssignment import *
-from os import listdir
-from os.path import isfile, join
+import os
 import time
 
 def run():
+
     cv.destroyAllWindows()
-    
-    mypath='../Photos/Part3'
-    onlyfiles = [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
+    fileDir = os.path.dirname(__file__)
+    mypath = os.path.join(fileDir, '../Photos/Part3')
+    onlyfiles = [ f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath,f)) ]
     images = np.empty(len(onlyfiles), dtype=object)
     for n in range(0, len(onlyfiles)):
-        images[n] = cv.imread(join(mypath,onlyfiles[n]),cv.IMREAD_UNCHANGED )
+        images[n] = cv.imread(os.path.join(mypath,onlyfiles[n]),cv.IMREAD_UNCHANGED )
     
     
-    
-    image = images[1]
-    cv.imshow("Before", image)
-
+    ##blurring
+    for image in images:
+        cv.imshow("Before", image)
+        boxBlurred = box_blur(image,5)
+        gaussianBlurred = gaussian_blur(image,5)
+        Hori = np.concatenate((image, boxBlurred), axis=1)
+        Hori = np.concatenate((Hori, gaussianBlurred), axis=1)
+        cv.imshow("Blurring", Hori)
+        cv.waitKey(0)
+        cv.destroyAllWindowss()
     #for i in range(1,10):
     #minify_image(image,i/100)
     
-    scaled = scale_linear_interpolation(image,0.25)
-    
-    cv.imshow("After", scaled)
-    time.sleep(1.0)
-    cv.waitKey(0)
-    cv.destroyAllWindowss()
+
 
     #cv.waitKey(0)
     #cv.destroyAllWindows()

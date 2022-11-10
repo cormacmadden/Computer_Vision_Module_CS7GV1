@@ -219,41 +219,50 @@ def solarize(img, threshold):
     cv.putText(output,"Solarized",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
+def image_flip_horizontal(img):
+    output = img
+    r,g,b = split(img)
+    output=output.astype('uint8')
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j] = b[i,img.shape[1]-1-j], g[i,img.shape[1]-1-j], r[i,img.shape[1]-1-j]
+    cv.putText(output,"Flip Horizontal",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    return output
+
+def image_flip_vertical(img):
+    output = img
+    r,g,b = split(img)
+    output=output.astype('uint8')
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            output[i,j] = b[img.shape[0]-1-i,j], g[img.shape[0]-1-i,j], r[img.shape[0]-1-i,j]
+    cv.putText(output,"Flip Vertical",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    return output
+
+##Part 2
+def box_blur(image, kernel_size):
+    kernel = np.zeros((kernel_size,kernel_size,3))
+    output = np.zeros(image.shape)
+    padded_image = pad_image(image, kernel)
+    kernel[:] = 1
+    kernel = kernel/(kernel_size**2)
+    
+    for i in range(0, image.shape[0],1):
+        for j in range(0, image.shape[1],1):    
+            roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1]]
+            k1 = (roi * kernel)
+            k2 = np.sum(k1, axis = 0)
+            k3 = np.sum(k2, axis = 0)
+            output[i][j]=k3
+            
+    output=output.astype('uint8')
+    return output
+
 def scale_image(img, percentage: float):
     width = int(img.shape[1] * percentage)
     height = int(img.shape[0] * percentage)
     dim = (width, height)
     return cv.resize(img,dim,interpolation = cv.INTER_NEAREST)
-
-def box_blur(img, amt):
-    arr = np.zeros((amt,amt,3))
-    arr = 1
-    arr = arr/(amt**2)
-    output = img * 0
-    pad = (amt - 1) // 2
-	#output = np.zeros((iH, iW), dtype="float32")
-    
-    for i in range(0, img.shape[0],1):
-        for j in range(0, img.shape[1],1):
-            #duplicate of base image, size of kernel
-            test = i-pad
-            test2 = i+pad
-            test3 = j-pad
-            test4 = j+pad
-            
-            test = np.clip(test,0,img.shape[0])
-            test2 = np.clip(test2,0,img.shape[0])
-            test3 = np.clip(test3,0,img.shape[1])
-            test4 = np.clip(test4,0,img.shape[1])
-                       
-            roi = np.zeros((amt,amt,3))
-            roi = img[(test):(test2),(test3):(test4)]
-            
-            k1 = (roi * arr)
-            k2 = np.sum(k1, axis = 0)
-            k3 = np.sum(k2, axis = 0)
-            output[i][j]=k3
-    return output
 
 def gaussian_blur(image, kernel_size):
     kernel = gaussian_kernel(kernel_size, sigma=math.sqrt(kernel_size))
@@ -403,8 +412,6 @@ def gaussian_kernel(size, sigma=1):
     kernel_1D = np.linspace(-(size // 2), size // 2, size)
     for i in range(size):
         kernel_1D[i] = dnorm(kernel_1D[i], 0, sigma)
-    one = np.sum(kernel_1D)
-
     kernel_2D = np.outer(kernel_1D.T, kernel_1D.T)
     sum = np.sum(kernel_2D)
 
@@ -605,24 +612,4 @@ def bilateral_blur_filter_individual_channels(image, kernel_size):
                 output[i,j,rgb]=k3
             show_region(roi, "ROI")
         #show_progress(output,"TempOutput")
-    return output
-
-def image_flip_horizontal(img):
-    output = img
-    r,g,b = split(img)
-    output=output.astype('uint8')
-    for i in range(img.shape[0]):
-        for j in range(img.shape[1]):
-            output[i,j] = b[i,img.shape[1]-1-j], g[i,img.shape[1]-1-j], r[i,img.shape[1]-1-j]
-    cv.putText(output,"Flip Horizontal",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
-    return output
-
-def image_flip_vertical(img):
-    output = img
-    r,g,b = split(img)
-    output=output.astype('uint8')
-    for i in range(img.shape[0]):
-        for j in range(img.shape[1]):
-            output[i,j] = b[img.shape[0]-1-i,j], g[img.shape[0]-1-i,j], r[img.shape[0]-1-i,j]
-    cv.putText(output,"Flip Vertical",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
