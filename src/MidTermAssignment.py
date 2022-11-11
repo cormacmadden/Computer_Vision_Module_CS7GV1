@@ -1,8 +1,8 @@
-import cv2 as cv
-import numpy as np
 import math
 from copy import deepcopy
 
+import cv2
+import numpy as np
 
 position = (10,20)
 def clip(r,g,b):
@@ -25,14 +25,14 @@ def split(img):
     return rgb
 
 def sat_image(img,amt):
-    #h,s,v = cv.split(img)
+    #h,s,v = cv2.split(img)
     processedImage=img[:,:].astype('float32')
     processedImage = processedImage[:,:]+amt
     #s=s*amt
     processedImage = np.clip(processedImage,0,255)
     processedImage=processedImage.astype('uint8')
-    #img = cv.merge([h,s,v])
-    #processedImage = cv.cvtColor(img, cv.COLOR_HSV2BGR)
+    #img = cv2.merge([h,s,v])
+    #processedImage = cv2.cv2tColor(img, cv2.COLOR_HSV2BGR)
     return processedImage
 
 def brighten(img, amt):
@@ -51,7 +51,7 @@ def brighten(img, amt):
         for j in range(img.shape[1]):
             output[i,j] = [b[i,j], g[i,j], r[i,j]]
             
-    cv.putText(output,"Exposure",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.putText(output,"Exposure",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def contrast_image_broken(img, contrast):
@@ -86,7 +86,7 @@ def contrast_image(img,contrast):
     
     output = np.clip(output,0,255)
     output=output.astype('uint8')
-    cv.putText(output,"Contrast",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.putText(output,"Contrast",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def image_temp(img, amt):
@@ -109,7 +109,7 @@ def image_temp(img, amt):
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             output[i,j] = [b[i,j], g[i,j], r[i,j]]
-    cv.putText(output,"Temperature",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.putText(output,"Temperature",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def image_tint(img, amt):
@@ -129,7 +129,7 @@ def image_tint(img, amt):
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             output[i,j] = [b[i,j], g[i,j], r[i,j]]
-    cv.putText(output,"Tint",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.putText(output,"Tint",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def greyscale(img):
@@ -163,7 +163,7 @@ def greyscale(img):
     output = output*255        
     output = np.clip(output,0,255)
     output = output.astype('uint8')
-    cv.putText(output,"Greyscale",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.putText(output,"Greyscale",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def greyscale_to_rgb(img):
@@ -199,7 +199,7 @@ def color_invert(img):
             output[i,j] = [b[i,j], g[i,j], r[i,j]]
                 
     output = output.astype('uint8')
-    cv.putText(output,"Inverted Color",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.putText(output,"Inverted Color",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def solarize(img, threshold):
@@ -216,7 +216,7 @@ def solarize(img, threshold):
                     output[i,j, rgb] = pix
                 
     output = output.astype('uint8')
-    cv.putText(output,"Solarized",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.putText(output,"Solarized",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def image_flip_horizontal(img):
@@ -226,7 +226,7 @@ def image_flip_horizontal(img):
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             output[i,j] = b[i,img.shape[1]-1-j], g[i,img.shape[1]-1-j], r[i,img.shape[1]-1-j]
-    cv.putText(output,"Flip Horizontal",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.putText(output,"Flip Horizontal",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 def image_flip_vertical(img):
@@ -236,7 +236,7 @@ def image_flip_vertical(img):
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
             output[i,j] = b[img.shape[0]-1-i,j], g[img.shape[0]-1-i,j], r[img.shape[0]-1-i,j]
-    cv.putText(output,"Flip Vertical",position,cv.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.putText(output,"Flip Vertical",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     return output
 
 ##Part 2
@@ -262,7 +262,7 @@ def scale_image(img, percentage: float):
     width = int(img.shape[1] * percentage)
     height = int(img.shape[0] * percentage)
     dim = (width, height)
-    return cv.resize(img,dim,interpolation = cv.INTER_NEAREST)
+    return cv2.resize(img,dim,interpolation = cv2.INTER_NEAREST)
 
 def gaussian_blur(image, kernel_size):
     kernel = gaussian_kernel(kernel_size, sigma=math.sqrt(kernel_size))
@@ -294,7 +294,7 @@ def sobel_filter(image,amt):
 def convolution3D(image, kernel):
     output = np.zeros(image.shape)
     padded_image = pad_image(image, kernel)
-    show_kernel(kernel[:,:,0],"kernel")
+    #show_kernel(kernel[:,:,0],"kernel")
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1]]
@@ -310,38 +310,36 @@ def convolution3D(image, kernel):
 def convolution2D(image, kernel):
     output = np.zeros(image.shape)
     padded_image = pad_image(image, kernel)
-    show_kernel(kernel,"kernel")
+    #show_kernel(kernel,"kernel")
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1]]
-            show_region(roi[:,:,0],"ROI")
+            #show_region(roi[:,:,0],"ROI")
             k1 = (kernel * roi)
             k2 = np.sum(k1, axis = 0)
             k3 = np.sum(k2, axis = 0)
             k3 = np.clip(k3,0,255)
             output[i][j]=k3
     output=output.astype('uint8')
-    #cv.imshow("Test", output)
+    #cv2.imshow("Test", output)
     return output
 
 def convolution_grey(image, kernel):
     output = np.zeros(image.shape)
     padded_image = pad_image(image, kernel)
-    show_kernel(kernel,"kernel")
+    #show_kernel(kernel,"kernel")
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1],:]
-            show_region(roi[:,:],"ROI")
+            #show_region(roi[:,:],"ROI")
             k1 = kernel * roi
             k4 = abs(np.sum(k1))
             k4 = np.clip(k4,0,255)
-            if k4 > 50:
-                print(k4 , " \n")
             output[i,j] = k4 
-        #cv.imshow("Test", output)
+        #cv2.imshow("Test", output)
     return output
 
-def sharpening_filter(image, amt):
+def sharpening_filter(image,amt):
     kernel = np.zeros((3,3,1))
     kernel[1,0,0]=-1
     kernel[0,1,0]=-1
@@ -350,6 +348,8 @@ def sharpening_filter(image, amt):
     kernel[1,1,0]=5
     kernel*=amt
     output = convolution2D(image,kernel)
+    output = np.clip(output,0,255)
+    output = output.astype('uint8')
     return output
 
 def bilateral_filter(image, kernel_size):
@@ -362,30 +362,42 @@ def bilateral_filter(image, kernel_size):
     padded_image = pad_image(image, kernel)
     
 
-    show_kernel(kernel[:,:,0],"kernel")
+    #show_kernel(kernel[:,:,0],"kernel")
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             roi = padded_image[i:i + kernel_width, j:j + kernel_height,:]
+            roi1 = show_region(roi, "ROI")
             centerpix = roi[kernel_width//2,kernel_height//2,:]
             centerpixRGB = np.sum(centerpix, axis = 0)
-            kernel = gaussian_kernel(kernel_size)
+            kernel = gaussian_kernel(kernel_size,3)
+            kernelsum1 = np.sum(kernel)
+
+            
             for k in range(kernel_width):
                 for l in range(kernel_height):
-                    pixRGBsum = np.sum(roi[k,l], axis = 0)
-                    diff = pixRGBsum - centerpixRGB
-                    if abs(diff) > 10 :
+                    kernelpixRGBsum = np.sum(roi[k,l], axis = 0)      
+                    diff = 0.0
+                    diff = abs(kernelpixRGBsum.astype('float64') - centerpixRGB.astype('float64'))
+                    if diff > 40 :
                         kernel [k,l] = 0
-            
-            show_kernel(kernel[:,:,0], "Kernel")
-            #     ####distance=(R1+G1+B1)-(R2+G2+B2)
-            #kernel[:,:,rgb] = normalize(kernel[:,:,rgb],0,1)
+
+            kernelsum2 = np.sum(kernel)
+
+            ##normalize kernel
+            for rgb in range(0,3):
+                sum = np.sum(kernel[:,:,rgb])
+                for k in range(kernel_width):
+                    for l in range(kernel_width): 
+                        kernel[k,l,rgb] /= sum
+
+            kernel1 = show_kernel(kernel[:,:,0], "Kernel")
+            kernelsum2 = np.sum(kernel)
             k1 = (kernel * roi)
             k2 = np.sum(k1, axis = 0)
             k3 = np.sum(k2, axis = 0)
             k3 = np.clip(k3,0,255)
             output[i][j][:]=k3
-            show_region(roi, "ROI")
-        show_progress(output,"TempOutput")
+        #show_progress(output,"TempOutput")
         
     output = np.clip(output,0,255)
     output=output.astype('uint8')
@@ -438,18 +450,20 @@ def show_kernel(kernel, title):
             img[i,j]= kernel[i,j]
         
     img=img.astype('uint8')
-    img = scale_image(img,10)
-    cv.imshow(title, img)
+    img = scale_image(img,20)
+    cv2.imshow(title, img)
+    return img
 
 def show_region(region, title):
     region = scale_image(region,15)
     region=region.astype('uint8')
-    cv.imshow(title, region)
+    cv2.imshow(title, region)
+    return region
     
 def show_progress(region, title):
     region = scale_image(region,10)
     region=region.astype('uint8')
-    cv.imshow(title, region)
+    cv2.imshow(title, region)
     
 def dnorm(x, mu, sd):
     return 1 / (np.sqrt(2 * np.pi) * sd) * np.e ** (-np.power((x - mu) / sd, 2) / 2)
@@ -469,30 +483,23 @@ def pad_image(image,kernel):
     
     image_width = image.shape[0]
     image_height = image.shape[1]
-    
     padx = (kernel.shape[0] - 1) // 2
     pady = (kernel.shape[1] - 1) // 2
-    
-
     #blank image that's padded on x and y
-    padded_image = np.zeros((image_width + (2 * pady), image_height + (2 * padx),image.shape[2]))
-        
+    padded_image = np.zeros((image_width + (2 * pady), image_height + (2 * padx),image.shape[2]))  
     #filled image that's padded on x and y
     padded_image[padx:padded_image.shape[0] - padx, pady:padded_image.shape[1] - pady] = image
-    
     for i in range(padx):
         #left padding
         padded_image[i,pady:padded_image.shape[1]-pady] = image[0,:]
-        
         #right padding
-        padded_image[(i+image_width+padx),pady:padded_image.shape[1]-pady] = image[image_width-4,:]
-        
+        padded_image[(i+image_width+padx),pady:padded_image.shape[1]-pady] = image[image_width-4,:]    
     for j in range(pady):
         #top padding
         padded_image[padx:padded_image.shape[0]-padx,j] = image[:,0]
         #bottom padding
         padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
-        
+    padded_image = padded_image.astype('uint8')
     return padded_image
 
 def subsample_image(image):
@@ -589,7 +596,7 @@ def bilateral_blur_filter_individual_channels(image, kernel_size):
         #bottom padding
         padded_image[padx:padded_image.shape[0]-padx,j+image_height+pady] = image[:,image_height-4]
 
-    show_kernel(kernel[:,:,0],"kernel")
+    #show_kernel(kernel[:,:,0],"kernel")
     for i in range(image_width):
         for j in range(image_height):
             roi = padded_image[i:i + kernel_width, j:j + kernel_height,:]
@@ -603,13 +610,13 @@ def bilateral_blur_filter_individual_channels(image, kernel_size):
                         if abs(diff) > 10 :
                             kernel [k,l,rgb] = 0
                 
-                show_kernel(kernel[:,:,rgb], "Kernel")
+                #show_kernel(kernel[:,:,rgb], "Kernel")
                 #kernel[:,:,rgb] = normalize(kernel[:,:,rgb],0,1)
                 k1 = (kernel[:,:,rgb] * roi[:,:,rgb])
                 k2 = np.sum(k1, axis = 0)
                 k3 = np.sum(k2, axis = 0)
                 k3 = np.clip(k3,0,255)
                 output[i,j,rgb]=k3
-            show_region(roi, "ROI")
+            #show_region(roi, "ROI")
         #show_progress(output,"TempOutput")
     return output
