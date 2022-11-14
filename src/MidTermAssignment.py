@@ -320,8 +320,8 @@ def convolution2D(image, kernel):
             k3 = np.sum(k2, axis = 0)
             k3 = np.clip(k3,0,255)
             output[i][j]=k3
-    output=output.astype('uint8')
-    #cv2.imshow("Test", output)
+    output = np.clip(output,0,255)
+    output = output.astype('uint8')
     return output
 
 def convolution_grey(image, kernel):
@@ -348,8 +348,6 @@ def sharpening_filter(image,amt):
     kernel[1,1,0]=5
     kernel*=amt
     output = convolution2D(image,kernel)
-    output = np.clip(output,0,255)
-    output = output.astype('uint8')
     return output
 
 def bilateral_filter(image, kernel_size):
@@ -357,11 +355,9 @@ def bilateral_filter(image, kernel_size):
     kernel = gaussian_kernel(kernel_size)
     kernel_width = kernel.shape[0]
     kernel_height = kernel.shape[1]
-    
     output = np.zeros(image.shape)
     padded_image = pad_image(image, kernel)
-    
-
+    kernel1 = show_kernel(kernel[:,:,0], "Kernel")
     #show_kernel(kernel[:,:,0],"kernel")
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
@@ -371,7 +367,7 @@ def bilateral_filter(image, kernel_size):
             centerpixRGB = np.sum(centerpix, axis = 0)
             kernel = gaussian_kernel(kernel_size,3)
             kernelsum1 = np.sum(kernel)
-
+            
             
             for k in range(kernel_width):
                 for l in range(kernel_height):
@@ -410,6 +406,7 @@ def median_filter(image, kernel_size):
     for i in range(image.shape[0]):
         for j in range(image.shape[1]):
             roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1]]
+            roi=roi.astype('float64')
             roi = roi**2
             for k in range(0,3):
                 pixel = np.median(roi[:,:,k])
@@ -420,7 +417,7 @@ def median_filter(image, kernel_size):
     output=output.astype('uint8')
     return output
 
-def gaussian_kernel(size, sigma=1):
+def gaussian_kernel(size, sigma=3):
     kernel_1D = np.linspace(-(size // 2), size // 2, size)
     for i in range(size):
         kernel_1D[i] = dnorm(kernel_1D[i], 0, sigma)
@@ -502,25 +499,31 @@ def pad_image(image,kernel):
     padded_image = padded_image.astype('uint8')
     return padded_image
 
-def subsample_image(image):
-    kernel = np.zeros((2,2,3))
-    output = np.zeros((int((image.shape[0]/2) +1),int((image.shape[1]/2)+1),3))
+def subsample_image(image,kernelsize = 2):
+    kernel = np.zeros((kernelsize,kernelsize,3))
+    output = np.zeros((int(image.shape[0]/2)+1,int(image.shape[1]/2)+1,3))
     padded_image = pad_image(image, kernel)
-    for i in range(0,image.shape[0],2):
-        for j in range(0,image.shape[1],2):
+    for i in range(0,image.shape[0],kernelsize):
+        for j in range(0,image.shape[1],kernelsize):
             roi = padded_image[i:i + kernel.shape[0], j:j + kernel.shape[1]]
+            roi=roi.astype('float64')
             roi = roi**2
             for k in range(0,3):
                 pixel = np.median(roi[:,:,k])
                 pixel = np.sqrt(pixel)
                 pixel = np.clip(pixel,0,255)
-                output[int(i/2),int(j/2),k]=pixel
+                output[int(i//2),int(j//2),k]=pixel
 
     output=output.astype('uint8')
     return output
 
 def gaussian_pyramid(image):
     image = gaussian_blur(image,3)
+    image = subsample_image(image)
+    return image
+
+def gaussian_pyramid_bilateral(image):
+    image = bilateral_filter(image,3)
     image = subsample_image(image)
     return image
 
@@ -563,6 +566,28 @@ def scale_bilinear_interpolation(image, amt):
                 
                 output[i,j,rgb] = finalPix
     output=output.astype('uint8')
+    return output
+
+def make_same_size(image1, image2):
+    width = 0
+    height = 0
+    if image1.shape[0]<image2.shape[0] :
+        width = image2.shape[0]
+    else: width = image1.shape[0]
+    if image1.shape[1]<image2.shape[1] :
+        height = image2.shape[1]
+    else: height = image1.shape[1]
+    image1mod = np.zeros((width,height,3))
+    image2mod = np.zeros((width,height,3))
+    for i in range(width):
+        for j in range(height):
+            image1mod[i,j] = image1[i,j]
+            image2mod[i,j] = image2[i,j]
+    return image1mod, image2mod
+    
+def gaussian_pyramid(image):
+    blurred = gaussian_blur(image,3)
+    output = subsample_image(blurred,2)
     return output
 
 def bilateral_blur_filter_individual_channels(image, kernel_size):

@@ -30,9 +30,11 @@ def run():
     '''
     
     ##sharpening
-    image = images[1]
+    image = images[0]
+    cv2.putText(image,"Original Image",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     sharpened = bilateral_filter(image,13)
-    cv2.putText(sharpened,"Bilateral Filter, Kernal Size = 13, Sigma = 3",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.putText(sharpened,"gaussian_blur, Kernal Size = 13",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    
     #sobeled = sobel_filter(image,kernalSize)
     #sobeled = greyscale_to_rgb(sobeled)
     #cv2.putText(sobeled,"Sobel Filter, Kernal Size = 9",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
