@@ -264,8 +264,9 @@ def scale_image(img, percentage: float):
     dim = (width, height)
     return cv2.resize(img,dim,interpolation = cv2.INTER_NEAREST)
 
-def gaussian_blur(image, kernel_size):
-    kernel = gaussian_kernel(kernel_size, sigma=math.sqrt(kernel_size))
+def gaussian_blur(image, kernel_size,):
+    #kernel = gaussian_kernel(kernel_size, sigma=math.sqrt(kernel_size))
+    kernel = gaussian_kernel(kernel_size, sigma=3)
     return convolution3D(image, kernel)
 
 def sobel_filter(image,amt):
@@ -644,4 +645,26 @@ def bilateral_blur_filter_individual_channels(image, kernel_size):
                 output[i,j,rgb]=k3
             #show_region(roi, "ROI")
         #show_progress(output,"TempOutput")
+    return output
+
+def unsharp_mask(image):
+    r,g,b = split(image)
+    blurred = gaussian_blur(image,9)
+    r1,g1,b1 = split(blurred)
+    r1 = r1.astype('float64')
+    g1 = g1.astype('float64')
+    b1 = b1.astype('float64') 
+    maskR = r-r1
+    maskG = g-g1
+    maskB = b-b1
+    r = r+maskR
+    r = b+maskB
+    r = g+maskG
+    
+    output  = np.zeros((image.shape[0],image.shape[1],3))
+    for i in range(output.shape[0]):
+        for j in range(output.shape[1]):
+            output[i,j] = [b[i,j], g[i,j], r[i,j]]
+    output = np.clip(output,0,255)
+    output = output.astype('uint8')
     return output

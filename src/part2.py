@@ -30,15 +30,17 @@ def run():
     '''
     
     ##sharpening
-    image = images[0]
+    image = images[3]
+    sharpened = sharpening_filter(image,1)
+    masked = unsharp_mask(image)
     cv2.putText(image,"Original Image",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
-    sharpened = bilateral_filter(image,13)
-    cv2.putText(sharpened,"gaussian_blur, Kernal Size = 13",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
-    
+    cv2.putText(masked,"Unsharp Masked Image, Kernal Size = 3",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.putText(sharpened,"Sharpened Image",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     #sobeled = sobel_filter(image,kernalSize)
     #sobeled = greyscale_to_rgb(sobeled)
     #cv2.putText(sobeled,"Sobel Filter, Kernal Size = 9",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     Hori = np.concatenate((image, sharpened), axis=1)
+    Hori = np.concatenate((Hori, masked), axis=1)
     #Hori = np.concatenate((Hori, sobeled), axis=1)
     cv2.imshow("Sharpening", Hori)
     '''

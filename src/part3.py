@@ -15,17 +15,18 @@ def run():
     
     #subsampling
     #for image in images:
-    image = images[4]
+    image = images[2]
     
-    
+    image = gaussian_pyramid_bilateral(image)
+    image = gaussian_pyramid_bilateral(image)
     #cv2.imshow("Before", image)
-    minimized1 = gaussian_pyramid_bilateral(image)
-    minimized2 = gaussian_pyramid_bilateral(minimized1)
-    minimized3 = gaussian_pyramid_bilateral(minimized2)
+    #minimized1 = gaussian_pyramid_bilateral(image)
+    #minimized2 = gaussian_pyramid_bilateral(minimized1)
+    #minimized2 = scale_NN(minimized2, 4)
     
     #minimized1 = scale_NN(minimized1, 2)
     #minimized2 = scale_NN(minimized2, 2)
-    minimized3 = scale_NN(minimized3, 8)
+    
     #cv2.imshow("Pyramid1", minimized1)
     #cv2.imshow("Pyramid2", minimized2)
     #cv2.imshow("Pyramid3", minimized3)
@@ -38,8 +39,8 @@ def run():
     #sub2 = scale_NN(minimized2,4)
     #sub3 = scale_NN(minimized3,8)
     
-    cv2.putText(minimized3,"Gaussian Pyramid Bilateral Filter",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
-    cv2.imshow("ssPyramid1", minimized3)   
+    cv2.putText(image,"Bilateral Pyramid, twice, eighthed",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.imshow("ssPyramid1", image)   
     #cv2.putText(sub1,"Bilinear Interpolation, 1st Downsample",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
     #cv2.imshow("ssPyramid1", sub1)
     #cv2.putText(sub2,"Bilinear Interpolation, 2nd Downsample",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
