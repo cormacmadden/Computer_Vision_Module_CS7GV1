@@ -28,9 +28,9 @@ def run():
     Hori = np.concatenate((image, boxBlurred), axis=1)
     Hori = np.concatenate((Hori, gaussianBlurred), axis=1)
     '''
-    
+    '''
     ##sharpening
-    image = images[3]
+    
     sharpened = sharpening_filter(image,1)
     masked = unsharp_mask(image)
     cv2.putText(image,"Original Image",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
@@ -43,7 +43,7 @@ def run():
     Hori = np.concatenate((Hori, masked), axis=1)
     #Hori = np.concatenate((Hori, sobeled), axis=1)
     cv2.imshow("Sharpening", Hori)
-    '''
+    
     ##non-Linear Diffusion
     image = images[3]
     boxBlurred = median_filter(image,kernalSize)
@@ -54,6 +54,10 @@ def run():
     Hori = np.concatenate((Hori, gaussianBlurred), axis=1)
     cv2.imshow("Blurring", Hori)
     '''
+    image = images[5]
+    sobelled = sobel_filter(image, 1)
+    cv2.putText(sobelled,"Sobel Filter, Kernal Size = 3",position,cv2.FONT_HERSHEY_PLAIN ,1,(0, 0, 255, 255),1)
+    cv2.imshow("Sobel Filter", sobelled)
     
     cv2.waitKey(0)
     cv2.destroyAllWindows()
