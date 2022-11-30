@@ -1,7 +1,6 @@
 .vscode/
 .vs/
 __pycache__/
-*.pdf
 Lab1.ipynb
 Lab1.py
 *.docx
